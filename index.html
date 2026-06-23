@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎨 Bảng Vẽ Cộng Đồng</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #e8e5df;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── Header ── */
+#header {
+  background: #fff;
+  border-bottom: 1px solid #e0ddd8;
+  padding: 0 16px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+#header h1 { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+
+.live-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: #666;
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #22c55e;
+  animation: blink 1.8s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+#userBadges {
+  display: flex; gap: 4px; margin-left: 6px;
+}
+.ubadge {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.1);
+}
+
+.me-tag {
+  font-size: 11px; background: #f1f0ed; color: #555;
+  padding: 2px 8px; border-radius: 20px;
+}
+
+/* ── Toolbar ── */
+#toolbar {
+  background: #fff;
+  border-bottom: 1px solid #e0ddd8;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.tg { display: flex; align-items: center; gap: 3px; padding-right: 10px; margin-right: 4px; border-right: 1px solid #e8e5e0; }
+.tg:last-child { border: none; padding: 0; margin: 0; }
+
+.tbtn {
+  width: 32px; height: 32px;
+  border: 1px solid #e0ddd8; border-radius: 7px;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: #555;
+  transition: background .1s, border-color .1s;
+}
+.tbtn:hover { background: #f5f3ef; }
+.tbtn.on { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+
+.tbtn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+
+label.lbl { font-size: 11px; color: #888; white-space: nowrap; }
+
+input[type=range] { width: 72px; accent-color: #3b82f6; cursor: pointer; }
+input[type=color] {
+  width: 32px; height: 32px;
+  border: 1px solid #e0ddd8; border-radius: 7px;
+  padding: 3px; cursor: pointer; background: transparent;
+}
+
+.swatch {
+  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform .12s;
+  flex-shrink: 0;
+}
+.swatch:hover { transform: scale(1.18); }
+.swatch.on { border-color: #1a1a1a !important; }
+
+#sizeDisplay {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.vl { width: 1px; height: 22px; background: #e0ddd8; }
+
+.btn-clear {
+  margin-left: auto;
+  padding: 5px 11px; font-size: 12px;
+  border: 1px solid #fca5a5; border-radius: 6px;
+  background: #fff1f1; color: #dc2626; cursor: pointer;
+  transition: background .1s;
+}
+.btn-clear:hover { background: #fee2e2; }
+
+/* ── Canvas area ── */
+#area {
+  flex: 1; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  background: #e8e5df;
+}
+
+#wrap { position: relative; line-height: 0; }
+
+#cv {
+  display: block; background: #fff;
+  cursor: crosshair;
+  box-shadow: 0 4px 24px rgba(0,0,0,.15);
+}
+
+#ov {  /* overlay for shape preview + remote cursors */
+  position: absolute; top: 0; left: 0;
+  pointer-events: none;
+}
+
+/* ── Remote cursors ── */
+.rcursor {
+  position: absolute;
+  pointer-events: none;
+  transition: left .04s linear, top .04s linear;
+  transform: translate(-2px, -2px);
+}
+.rcursor-label {
+  font-size: 10px; font-weight: 600;
+  color: #fff; border-radius: 4px;
+  padding: 1px 5px; margin-top: 1px;
+  white-space: nowrap;
+}
+
+/* ── Status bar ── */
+#status {
+  background: #fff;
+  border-top: 1px solid #e0ddd8;
+  padding: 3px 14px;
+  display: flex; gap: 10px;
+  font-size: 11px; color: #999;
+  flex-shrink: 0;
+}
+#status span b { color: #555; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <h1>🎨 Bảng Vẽ Cộng Đồng</h1>
+  <div class="live-badge"><div class="live-dot"></div><span id="countTxt">0 người</span></div>
+  <div id="userBadges"></div>
+  <div class="me-tag" id="meTag">Bạn: —</div>
+</div>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <!-- Tool buttons -->
+  <div class="tg">
+    <button class="tbtn on" id="t-pen"    title="Bút chì [P]"         onclick="setTool('pen')">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+    </button>
+    <button class="tbtn"    id="t-brush"  title="Cọ mềm [B]"          onclick="setTool('brush')">
+      <svg viewBox="0 0 24 24"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 114.03 4.03l-8.06 8.08"/><path d="M7.07 14.94C5.79 16.3 4.1 16.69 3 16.45c.4 2.01 2 3.46 4.5 3.9L9 20l-1.09 1.09A.5.5 0 008 22l4-4"/></svg>
+    </button>
+    <button class="tbtn"    id="t-eraser" title="Tẩy [E]"             onclick="setTool('eraser')">
+      <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l10-10 7 7-2.5 2.5"/><path d="M6.0 11.0 L13 18"/></svg>
+    </button>
+    <div class="vl"></div>
+    <button class="tbtn"    id="t-line"   title="Đường thẳng [L]"     onclick="setTool('line')">
+      <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+    </button>
+    <button class="tbtn"    id="t-rect"   title="Chữ nhật [R]"        onclick="setTool('rect')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    </button>
+    <button class="tbtn"    id="t-circle" title="Hình tròn [C]"       onclick="setTool('circle')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>
+    </button>
+  </div>
+
+  <!-- Color -->
+  <div class="tg" style="gap:4px">
+    <input type="color" id="cpick" value="#000000" title="Chọn màu" oninput="setColor(this.value)">
+    <div style="display:flex;flex-wrap:wrap;gap:3px;max-width:128px" id="palette"></div>
+  </div>
+
+  <!-- Size -->
+  <div class="tg" style="gap:6px">
+    <label class="lbl">Cỡ</label>
+    <input type="range" id="szSlider" min="1" max="60" value="4" step="1" oninput="setSize(+this.value)">
+    <div id="sizeDisplay"><div id="szDot" style="background:#000;border-radius:50%;width:4px;height:4px"></div></div>
+  </div>
+
+  <!-- Opacity -->
+  <div class="tg" style="gap:6px">
+    <label class="lbl">Mờ</label>
+    <input type="range" id="opSlider" min="5" max="100" value="100" step="5" oninput="setOpacity(+this.value)">
+    <label class="lbl" id="opVal">100%</label>
+  </div>
+
+  <!-- Fill checkbox -->
+  <div class="tg" style="gap:5px">
+    <input type="checkbox" id="fillChk" style="cursor:pointer">
+    <label class="lbl" for="fillChk" style="cursor:pointer">Tô màu</label>
+  </div>
+
+  <button class="btn-clear" onclick="doClear()">🗑 Xóa tất cả</button>
+</div>
+
+<!-- Canvas -->
+<div id="area">
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <canvas id="ov"></canvas>
+  </div>
+</div>
+
+<!-- Status -->
+<div id="status">
+  <span>Công cụ: <b id="stTool">Bút chì</b></span>
+  <span>Màu: <b id="stColor">#000000</b></span>
+  <span>Cỡ: <b id="stSize">4px</b></span>
+  <span>Vị trí: <b id="stPos">—</b></span>
+</div>
+
+<script>
+// ─── Socket ───────────────────────────────────────────────
+const socket = io();
+
+// ─── Canvas setup ─────────────────────────────────────────
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const ov = document.getElementById('ov');
+const octx = ov.getContext('2d');
+
+function fitCanvas() {
+  const area = document.getElementById('area');
+  const W = Math.floor(Math.min(area.clientWidth  - 24, 1400));
+  const H = Math.floor(Math.min(area.clientHeight - 24, 900));
+
+  // Preserve drawing
+  const tmp = document.createElement('canvas');
+  tmp.width = cv.width; tmp.height = cv.height;
+  tmp.getContext('2d').drawImage(cv, 0, 0);
+
+  cv.width  = W; cv.height  = H;
+  ov.width  = W; ov.height  = H;
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(tmp, 0, 0);
+}
+
+// ─── State ────────────────────────────────────────────────
+let tool    = 'pen';
+let color   = '#000000';
+let size    = 4;
+let opacity = 1;
+let fill    = false;
+let drawing = false;
+let sx, sy, lx, ly;
+let snap    = null;   // snapshot for shape tools
+let myId    = null;
+let myColor = '#555';
+
+// ─── Colour palette ───────────────────────────────────────
+const PRESETS = [
+  '#000000','#ffffff','#6b7280','#d1d5db',
+  '#ef4444','#f97316','#eab308','#22c55e',
+  '#3b82f6','#8b5cf6','#ec4899','#14b8a6',
+  '#92400e','#1e3a5f',
+];
+
+const pal = document.getElementById('palette');
+PRESETS.forEach(c => {
+  const d = document.createElement('div');
+  d.className = 'swatch' + (c === '#000000' ? ' on' : '');
+  d.style.background = c;
+  if (c === '#ffffff') d.style.boxShadow = 'inset 0 0 0 1px #d0cdc8';
+  d.onclick = () => pickPreset(c, d);
+  pal.appendChild(d);
+});
+
+function setColor(c) {
+  color = c;
+  document.getElementById('cpick').value = c;
+  document.getElementById('stColor').textContent = c;
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('on'));
+  updateSzDot();
+}
+function pickPreset(c, el) {
+  setColor(c);
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('on'));
+  el.classList.add('on');
+}
+
+// ─── Tool controls ────────────────────────────────────────
+const TOOL_NAMES = { pen:'Bút chì', brush:'Cọ mềm', eraser:'Tẩy', line:'Đường thẳng', rect:'Chữ nhật', circle:'Hình tròn' };
+
+function setTool(t) {
+  tool = t;
+  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
+  document.getElementById('t-' + t)?.classList.add('on');
+  cv.style.cursor = t === 'eraser' ? 'cell' : 'crosshair';
+  document.getElementById('stTool').textContent = TOOL_NAMES[t] || t;
+}
+
+function setSize(v) {
+  size = v;
+  document.getElementById('stSize').textContent = v + 'px';
+  updateSzDot();
+}
+function setOpacity(v) {
+  opacity = v / 100;
+  document.getElementById('opVal').textContent = v + '%';
+}
+function updateSzDot() {
+  const d = document.getElementById('szDot');
+  const s = Math.max(2, Math.min(size, 26));
+  d.style.width  = s + 'px';
+  d.style.height = s + 'px';
+  d.style.background = color || '#000';
+}
+
+// ─── Drawing utilities ────────────────────────────────────
+function pos(e) {
+  const r = cv.getBoundingClientRect();
+  const sx2 = cv.width  / r.width;
+  const sy2 = cv.height / r.height;
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (cx - r.left) * sx2, y: (cy - r.top) * sy2 };
+}
+
+function h2rgba(hex, a) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// The core draw function — works for both local and remote events
+function applyDraw(d, target) {
+  const c = target || ctx;
+  c.save();
+  c.globalAlpha  = d.opacity ?? 1;
+  c.lineWidth    = d.size;
+  c.lineCap      = 'round';
+  c.lineJoin     = 'round';
+  c.globalCompositeOperation = 'source-over';
+
+  const col = (d.tool === 'eraser') ? '#ffffff' : d.color;
+  c.strokeStyle  = col;
+  c.fillStyle    = h2rgba(col, (d.opacity ?? 1) * 0.15);
+
+  switch (d.type) {
+    case 'dot':
+      c.beginPath();
+      c.arc(d.x0, d.y0, d.size / 2, 0, Math.PI * 2);
+      c.fillStyle = col;
+      c.globalAlpha = d.opacity ?? 1;
+      c.fill();
+      break;
+    case 'move':
+      c.beginPath();
+      c.moveTo(d.x0, d.y0);
+      c.lineTo(d.x1, d.y1);
+      c.stroke();
+      break;
+    case 'line':
+      c.beginPath();
+      c.moveTo(d.x0, d.y0);
+      c.lineTo(d.x1, d.y1);
+      c.stroke();
+      break;
+    case 'rect':
+      c.beginPath();
+      c.rect(d.x0, d.y0, d.x1 - d.x0, d.y1 - d.y0);
+      if (d.fill) c.fill();
+      c.stroke();
+      break;
+    case 'circle': {
+      const rx = Math.abs(d.x1 - d.x0) / 2;
+      const ry = Math.abs(d.y1 - d.y0) / 2;
+      const cx2 = d.x0 + (d.x1 - d.x0) / 2;
+      const cy2 = d.y0 + (d.y1 - d.y0) / 2;
+      c.beginPath();
+      c.ellipse(cx2, cy2, rx, ry, 0, 0, Math.PI * 2);
+      if (d.fill) c.fill();
+      c.stroke();
+      break;
+    }
+  }
+  c.restore();
+}
+
+// ─── Mouse / Touch events ─────────────────────────────────
+cv.addEventListener('mousedown',  startDraw);
+cv.addEventListener('mousemove',  moveDraw);
+cv.addEventListener('mouseup',    endDraw);
+cv.addEventListener('mouseleave', endDraw);
+cv.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e); }, { passive: false });
+cv.addEventListener('touchmove',  e => { e.preventDefault(); moveDraw(e);  }, { passive: false });
+cv.addEventListener('touchend',   e => { e.preventDefault(); endDraw(e);   }, { passive: false });
+
+function startDraw(e) {
+  drawing = true;
+  const p = pos(e);
+  sx = lx = p.x; sy = ly = p.y;
+
+  if (['line','rect','circle'].includes(tool)) {
+    snap = ctx.getImageData(0, 0, cv.width, cv.height);
+  }
+
+  // Dot at start
+  const d = mkData('dot', sx, sy, sx, sy);
+  applyDraw(d);
+  socket.emit('draw', d);
+}
+
+function moveDraw(e) {
+  const p = pos(e);
+  document.getElementById('stPos').textContent = `${Math.round(p.x)}, ${Math.round(p.y)}`;
+  socket.emit('cursor', { x: p.x, y: p.y });
+
+  if (!drawing) return;
+
+  if (['pen','brush','eraser'].includes(tool)) {
+    const d = mkData('move', lx, ly, p.x, p.y);
+    applyDraw(d);
+    socket.emit('draw', d);
+    lx = p.x; ly = p.y;
+  } else {
+    // Shape preview on overlay canvas
+    octx.clearRect(0, 0, ov.width, ov.height);
+    if (snap) ctx.putImageData(snap, 0, 0);
+    const d = mkData(tool, sx, sy, p.x, p.y);
+    applyDraw(d, octx);
+  }
+}
+
+function endDraw(e) {
+  if (!drawing) return;
+  drawing = false;
+
+  if (['line','rect','circle'].includes(tool)) {
+    const p = e.changedTouches
+      ? pos({ clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY })
+      : pos(e);
+
+    octx.clearRect(0, 0, ov.width, ov.height);
+    if (snap) { ctx.putImageData(snap, 0, 0); snap = null; }
+
+    const d = mkData(tool, sx, sy, p.x, p.y);
+    applyDraw(d);
+    socket.emit('draw', d);
+  }
+}
+
+function mkData(type, x0, y0, x1, y1) {
+  const isFree = ['pen','eraser'].includes(tool);
+  const isBrush = tool === 'brush';
+  return {
+    type,
+    tool,
+    color: tool === 'eraser' ? '#ffffff' : color,
+    size:  tool === 'eraser' ? size * 2
+         : isBrush          ? size * 2.8
+         : size,
+    opacity: isBrush ? opacity * 0.55 : opacity,
+    fill: document.getElementById('fillChk').checked,
+    x0, y0, x1, y1
+  };
+}
+
+// ─── Clear ────────────────────────────────────────────────
+function doClear() {
+  if (!confirm('Xóa toàn bộ canvas? Mọi người đều sẽ thấy.')) return;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  socket.emit('clear');
+}
+
+// ─── Keyboard shortcuts ───────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const m = { p:'pen', b:'brush', e:'eraser', l:'line', r:'rect', c:'circle' };
+  if (m[e.key]) setTool(m[e.key]);
+});
+
+// ─── Remote cursors ───────────────────────────────────────
+const rcMap = {};
+
+function makeCursor(id, color2) {
+  const el = document.createElement('div');
+  el.className = 'rcursor';
+  el.id = 'rc_' + id;
+  el.innerHTML = `
+    <svg width="14" height="18" viewBox="0 0 14 18" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))">
+      <path d="M0 0 L0 14 L3.5 10 L6 17 L8 16 L5.5 9 L10 9 Z"
+            fill="${color2}" stroke="white" stroke-width="1" stroke-linejoin="round"/>
+    </svg>
+    <div class="rcursor-label" style="background:${color2}">${id}</div>`;
+  document.getElementById('wrap').appendChild(el);
+  rcMap[id] = el;
+  return el;
+}
+
+socket.on('cursor', ({ id, userId, color: c, x, y }) => {
+  if (id === myId) return;
+  let el = rcMap[id] || makeCursor(userId || id.slice(0,4), c || '#666');
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+});
+
+socket.on('removeCursor', id => {
+  if (rcMap[id]) { rcMap[id].remove(); delete rcMap[id]; }
+});
+
+// ─── Socket events ────────────────────────────────────────
+socket.on('init', ({ history, me, users }) => {
+  myId    = socket.id;
+  myColor = me.color;
+  document.getElementById('meTag').textContent = `Bạn: ${me.id}`;
+  document.getElementById('meTag').style.borderLeft = `3px solid ${me.color}`;
+  document.getElementById('meTag').style.paddingLeft = '7px';
+  history.forEach(d => applyDraw(d));
+  updateUserBadges(users);
+});
+
+socket.on('draw',  d => applyDraw(d));
+
+socket.on('clear', () => {
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+});
+
+socket.on('userList', users => {
+  document.getElementById('countTxt').textContent = users.length + ' người';
+  updateUserBadges(users);
+});
+
+function updateUserBadges(users) {
+  const el = document.getElementById('userBadges');
+  el.innerHTML = users.slice(0, 8).map(u =>
+    `<div class="ubadge" style="background:${u.color}" title="${u.id}">${u.id}</div>`
+  ).join('') + (users.length > 8 ? `<div class="ubadge" style="background:#aaa">+${users.length-8}</div>` : '');
+}
+
+// ─── Init ─────────────────────────────────────────────────
+window.addEventListener('load', fitCanvas);
+window.addEventListener('resize', fitCanvas);
+</script>
+</body>
+</html>
