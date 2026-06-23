@@ -1,13 +1,13 @@
 {
-  "name": "collaborative-painter",
+  "name": "community-drawing",
   "version": "1.0.0",
-  "description": "Bảng vẽ cộng đồng real-time",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.6.1",
+    "mongodb": "^6.0.0"
   }
 }
