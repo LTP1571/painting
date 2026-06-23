@@ -515,26 +515,39 @@ document.addEventListener('keydown', e => {
 // ─── Remote cursors ───────────────────────────────────────
 const rcMap = {};
 
-function makeCursor(id, color2) {
+// Đổi canvas coordinate → CSS pixel (vì canvas có thể scale)
+function canvasToCss(x, y) {
+  const r = cv.getBoundingClientRect();
+  return {
+    cx: x * (r.width  / cv.width),
+    cy: y * (r.height / cv.height)
+  };
+}
+
+function makeCursor(socketId, label, color2) {
   const el = document.createElement('div');
   el.className = 'rcursor';
-  el.id = 'rc_' + id;
   el.innerHTML = `
     <svg width="14" height="18" viewBox="0 0 14 18" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))">
       <path d="M0 0 L0 14 L3.5 10 L6 17 L8 16 L5.5 9 L10 9 Z"
             fill="${color2}" stroke="white" stroke-width="1" stroke-linejoin="round"/>
     </svg>
-    <div class="rcursor-label" style="background:${color2}">${id}</div>`;
+    <div class="rcursor-label" style="background:${color2}">${label}</div>`;
   document.getElementById('wrap').appendChild(el);
-  rcMap[id] = el;
+  rcMap[socketId] = el;   // key = socket.id (không đổi)
   return el;
 }
 
 socket.on('cursor', ({ id, userId, color: c, x, y }) => {
   if (id === myId) return;
-  let el = rcMap[id] || makeCursor(userId || id.slice(0,4), c || '#666');
-  el.style.left = x + 'px';
-  el.style.top  = y + 'px';
+  // Tìm cursor theo socket.id — nếu chưa có mới tạo
+  let el = rcMap[id];
+  if (!el) el = makeCursor(id, userId || id.slice(0,4), c || '#666');
+
+  // Đổi tọa độ canvas → CSS pixel
+  const { cx, cy } = canvasToCss(x, y);
+  el.style.left = cx + 'px';
+  el.style.top  = cy + 'px';
 });
 
 socket.on('removeCursor', id => {
