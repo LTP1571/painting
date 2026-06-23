@@ -42,9 +42,7 @@ body {
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
 
-#userBadges {
-  display: flex; gap: 4px; margin-left: 6px;
-}
+#userBadges { display: flex; gap: 4px; margin-left: 6px; }
 .ubadge {
   width: 26px; height: 26px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -70,7 +68,11 @@ body {
   flex-wrap: wrap;
 }
 
-.tg { display: flex; align-items: center; gap: 3px; padding-right: 10px; margin-right: 4px; border-right: 1px solid #e8e5e0; }
+.tg {
+  display: flex; align-items: center; gap: 3px;
+  padding-right: 10px; margin-right: 4px;
+  border-right: 1px solid #e8e5e0;
+}
 .tg:last-child { border: none; padding: 0; margin: 0; }
 
 .tbtn {
@@ -83,7 +85,6 @@ body {
 }
 .tbtn:hover { background: #f5f3ef; }
 .tbtn.on { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-
 .tbtn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
 
 label.lbl { font-size: 11px; color: #888; white-space: nowrap; }
@@ -136,7 +137,7 @@ input[type=color] {
   box-shadow: 0 4px 24px rgba(0,0,0,.15);
 }
 
-#ov {  /* overlay for shape preview + remote cursors */
+#ov {
   position: absolute; top: 0; left: 0;
   pointer-events: none;
 }
@@ -179,50 +180,45 @@ input[type=color] {
 
 <!-- Toolbar -->
 <div id="toolbar">
-  <!-- Tool buttons -->
   <div class="tg">
-    <button class="tbtn on" id="t-pen"    title="Bút chì [P]"         onclick="setTool('pen')">
+    <button class="tbtn on" id="t-pen"    title="Bút chì [P]"    onclick="setTool('pen')">
       <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
     </button>
-    <button class="tbtn"    id="t-brush"  title="Cọ mềm [B]"          onclick="setTool('brush')">
+    <button class="tbtn"    id="t-brush"  title="Cọ mềm [B]"    onclick="setTool('brush')">
       <svg viewBox="0 0 24 24"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 114.03 4.03l-8.06 8.08"/><path d="M7.07 14.94C5.79 16.3 4.1 16.69 3 16.45c.4 2.01 2 3.46 4.5 3.9L9 20l-1.09 1.09A.5.5 0 008 22l4-4"/></svg>
     </button>
-    <button class="tbtn"    id="t-eraser" title="Tẩy [E]"             onclick="setTool('eraser')">
+    <button class="tbtn"    id="t-eraser" title="Tẩy [E]"        onclick="setTool('eraser')">
       <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l10-10 7 7-2.5 2.5"/><path d="M6.0 11.0 L13 18"/></svg>
     </button>
     <div class="vl"></div>
-    <button class="tbtn"    id="t-line"   title="Đường thẳng [L]"     onclick="setTool('line')">
+    <button class="tbtn"    id="t-line"   title="Đường thẳng [L]" onclick="setTool('line')">
       <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"/></svg>
     </button>
-    <button class="tbtn"    id="t-rect"   title="Chữ nhật [R]"        onclick="setTool('rect')">
+    <button class="tbtn"    id="t-rect"   title="Chữ nhật [R]"  onclick="setTool('rect')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
     </button>
-    <button class="tbtn"    id="t-circle" title="Hình tròn [C]"       onclick="setTool('circle')">
+    <button class="tbtn"    id="t-circle" title="Hình tròn [C]" onclick="setTool('circle')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>
     </button>
   </div>
 
-  <!-- Color -->
   <div class="tg" style="gap:4px">
     <input type="color" id="cpick" value="#000000" title="Chọn màu" oninput="setColor(this.value)">
     <div style="display:flex;flex-wrap:wrap;gap:3px;max-width:128px" id="palette"></div>
   </div>
 
-  <!-- Size -->
   <div class="tg" style="gap:6px">
     <label class="lbl">Cỡ</label>
     <input type="range" id="szSlider" min="1" max="60" value="4" step="1" oninput="setSize(+this.value)">
     <div id="sizeDisplay"><div id="szDot" style="background:#000;border-radius:50%;width:4px;height:4px"></div></div>
   </div>
 
-  <!-- Opacity -->
   <div class="tg" style="gap:6px">
     <label class="lbl">Mờ</label>
     <input type="range" id="opSlider" min="5" max="100" value="100" step="5" oninput="setOpacity(+this.value)">
     <label class="lbl" id="opVal">100%</label>
   </div>
 
-  <!-- Fill checkbox -->
   <div class="tg" style="gap:5px">
     <input type="checkbox" id="fillChk" style="cursor:pointer">
     <label class="lbl" for="fillChk" style="cursor:pointer">Tô màu</label>
@@ -252,38 +248,49 @@ input[type=color] {
 const socket = io();
 
 // ─── Canvas setup ─────────────────────────────────────────
-const cv = document.getElementById('cv');
+const cv  = document.getElementById('cv');
 const ctx = cv.getContext('2d');
-const ov = document.getElementById('ov');
+const ov  = document.getElementById('ov');
 const octx = ov.getContext('2d');
 
 function fitCanvas() {
   const area = document.getElementById('area');
   const W = Math.floor(Math.min(area.clientWidth  - 24, 1400));
   const H = Math.floor(Math.min(area.clientHeight - 24, 900));
+  if (cv.width === W && cv.height === H) return; // Không resize nếu kích thước không đổi
 
-  // Preserve drawing
   const tmp = document.createElement('canvas');
   tmp.width = cv.width; tmp.height = cv.height;
   tmp.getContext('2d').drawImage(cv, 0, 0);
 
-  cv.width  = W; cv.height  = H;
-  ov.width  = W; ov.height  = H;
+  cv.width = W; cv.height = H;
+  ov.width = W; ov.height = H;
 
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, W, H);
   ctx.drawImage(tmp, 0, 0);
+
+  // FIX: snap bị stale sau resize → cancel shape drawing
+  snap = null;
+  drawing = false;
 }
+
+// FIX: Debounce resize để tránh flicker trên mobile khi bàn phím mở
+let resizeTimer;
+window.addEventListener('load',   fitCanvas);
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(fitCanvas, 250);
+});
 
 // ─── State ────────────────────────────────────────────────
 let tool    = 'pen';
 let color   = '#000000';
 let size    = 4;
 let opacity = 1;
-let fill    = false;
 let drawing = false;
 let sx, sy, lx, ly;
-let snap    = null;   // snapshot for shape tools
+let snap    = null;  // snapshot CHỈ dùng trong endDraw, không restore trong moveDraw
 let myId    = null;
 let myColor = '#555';
 
@@ -314,12 +321,14 @@ function setColor(c) {
 }
 function pickPreset(c, el) {
   setColor(c);
-  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('on'));
   el.classList.add('on');
 }
 
 // ─── Tool controls ────────────────────────────────────────
-const TOOL_NAMES = { pen:'Bút chì', brush:'Cọ mềm', eraser:'Tẩy', line:'Đường thẳng', rect:'Chữ nhật', circle:'Hình tròn' };
+const TOOL_NAMES = {
+  pen:'Bút chì', brush:'Cọ mềm', eraser:'Tẩy',
+  line:'Đường thẳng', rect:'Chữ nhật', circle:'Hình tròn'
+};
 
 function setTool(t) {
   tool = t;
@@ -348,12 +357,14 @@ function updateSzDot() {
 
 // ─── Drawing utilities ────────────────────────────────────
 function pos(e) {
-  const r = cv.getBoundingClientRect();
+  const r  = cv.getBoundingClientRect();
   const sx2 = cv.width  / r.width;
   const sy2 = cv.height / r.height;
-  const cx = e.touches ? e.touches[0].clientX : e.clientX;
-  const cy = e.touches ? e.touches[0].clientY : e.clientY;
-  return { x: (cx - r.left) * sx2, y: (cy - r.top) * sy2 };
+  const src = e.touches ? e.touches[0] : e.changedTouches ? e.changedTouches[0] : e;
+  return {
+    x: (src.clientX - r.left) * sx2,
+    y: (src.clientY - r.top)  * sy2
+  };
 }
 
 function h2rgba(hex, a) {
@@ -363,26 +374,25 @@ function h2rgba(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-// The core draw function — works for both local and remote events
+// applyDraw — dùng chung cho local + remote + history replay
 function applyDraw(d, target) {
   const c = target || ctx;
   c.save();
-  c.globalAlpha  = d.opacity ?? 1;
-  c.lineWidth    = d.size;
-  c.lineCap      = 'round';
-  c.lineJoin     = 'round';
+  c.globalAlpha = d.opacity ?? 1;
+  c.lineWidth   = d.size;
+  c.lineCap     = 'round';
+  c.lineJoin    = 'round';
   c.globalCompositeOperation = 'source-over';
 
   const col = (d.tool === 'eraser') ? '#ffffff' : d.color;
-  c.strokeStyle  = col;
-  c.fillStyle    = h2rgba(col, (d.opacity ?? 1) * 0.15);
+  c.strokeStyle = col;
+  c.fillStyle   = h2rgba(col, (d.opacity ?? 1) * 0.15);
 
   switch (d.type) {
     case 'dot':
       c.beginPath();
       c.arc(d.x0, d.y0, d.size / 2, 0, Math.PI * 2);
       c.fillStyle = col;
-      c.globalAlpha = d.opacity ?? 1;
       c.fill();
       break;
     case 'move':
@@ -404,8 +414,8 @@ function applyDraw(d, target) {
       c.stroke();
       break;
     case 'circle': {
-      const rx = Math.abs(d.x1 - d.x0) / 2;
-      const ry = Math.abs(d.y1 - d.y0) / 2;
+      const rx  = Math.abs(d.x1 - d.x0) / 2;
+      const ry  = Math.abs(d.y1 - d.y0) / 2;
       const cx2 = d.x0 + (d.x1 - d.x0) / 2;
       const cy2 = d.y0 + (d.y1 - d.y0) / 2;
       c.beginPath();
@@ -430,14 +440,15 @@ cv.addEventListener('touchend',   e => { e.preventDefault(); endDraw(e);   }, { 
 function startDraw(e) {
   drawing = true;
   const p = pos(e);
-  sx = lx = p.x; sy = ly = p.y;
+  sx = lx = p.x;
+  sy = ly = p.y;
 
-  if (['line','rect','circle'].includes(tool)) {
+  if (isShape(tool)) {
+    // FIX: Chỉ lưu snap để restore ở endDraw, KHÔNG dùng trong moveDraw
     snap = ctx.getImageData(0, 0, cv.width, cv.height);
     return;
   }
 
-  // Dot at start — chỉ cho pen/brush/eraser
   const d = mkData('dot', sx, sy, sx, sy);
   applyDraw(d);
   socket.emit('draw', d);
@@ -450,15 +461,16 @@ function moveDraw(e) {
 
   if (!drawing) return;
 
-  if (['pen','brush','eraser'].includes(tool)) {
+  if (!isShape(tool)) {
+    // Pen / brush / eraser: vẽ thẳng lên canvas chính
     const d = mkData('move', lx, ly, p.x, p.y);
     applyDraw(d);
     socket.emit('draw', d);
     lx = p.x; ly = p.y;
   } else {
-    // Shape preview on overlay canvas
+    // FIX: Shape preview chỉ vẽ lên OVERLAY, KHÔNG đụng canvas chính
+    // Canvas chính được giữ nguyên (snap), overlay clear + vẽ preview
     octx.clearRect(0, 0, ov.width, ov.height);
-    if (snap) ctx.putImageData(snap, 0, 0);
     const d = mkData(tool, sx, sy, p.x, p.y);
     applyDraw(d, octx);
   }
@@ -468,47 +480,60 @@ function endDraw(e) {
   if (!drawing) return;
   drawing = false;
 
-  if (['line','rect','circle'].includes(tool)) {
-    const p = e.changedTouches
-      ? pos({ clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY })
-      : pos(e);
-
+  if (isShape(tool)) {
+    const p = pos(e); // pos() tự handle cả changedTouches
     octx.clearRect(0, 0, ov.width, ov.height);
+
+    // FIX: Restore snap để đảm bảo không giữ stroke remote bị mất
+    // (snap là trạng thái canvas lúc bắt đầu vẽ shape)
     if (snap) { ctx.putImageData(snap, 0, 0); snap = null; }
 
     const d = mkData(tool, sx, sy, p.x, p.y);
-    applyDraw(d);
+    applyDraw(d);        // commit lên canvas chính
     socket.emit('draw', d);
   }
 }
 
+function isShape(t) {
+  return t === 'line' || t === 'rect' || t === 'circle';
+}
+
 function mkData(type, x0, y0, x1, y1) {
-  const isFree = ['pen','eraser'].includes(tool);
   const isBrush = tool === 'brush';
   return {
     type,
     tool,
-    color: tool === 'eraser' ? '#ffffff' : color,
-    size:  tool === 'eraser' ? size * 2
-         : isBrush          ? size * 2.8
-         : size,
-    opacity: isBrush ? opacity * 0.55 : opacity,
-    fill: document.getElementById('fillChk').checked,
+    color:   tool === 'eraser' ? '#ffffff' : color,
+    size:    tool === 'eraser' ? size * 2 : isBrush ? size * 2.8 : size,
+    // FIX: Brush opacity — không nhân 0.55 vào data, thay vào đó dùng globalAlpha riêng
+    // để người remote thấy đúng độ mờ. Dùng 0.7 làm hệ số brush feel.
+    opacity: isBrush ? Math.min(opacity * 0.7, 1) : opacity,
+    fill:    document.getElementById('fillChk').checked,
     x0, y0, x1, y1
   };
 }
 
 // ─── Clear ────────────────────────────────────────────────
-function doClear() {
-  if (!confirm('Xóa toàn bộ canvas? Mọi người đều sẽ thấy.')) return;
+function clearCanvas() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, cv.width, cv.height);
+  octx.clearRect(0, 0, ov.width, ov.height);
+  // FIX: Cancel shape đang vẽ dở khi nhận clear từ remote
+  snap    = null;
+  drawing = false;
+}
+
+function doClear() {
+  if (!confirm('Xóa toàn bộ canvas? Mọi người đều sẽ thấy.')) return;
+  clearCanvas();
   socket.emit('clear');
 }
 
 // ─── Keyboard shortcuts ───────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
+  // FIX: Bỏ qua Ctrl/Cmd/Alt combos (Ctrl+C, Ctrl+Z, v.v.)
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
   const m = { p:'pen', b:'brush', e:'eraser', l:'line', r:'rect', c:'circle' };
   if (m[e.key]) setTool(m[e.key]);
 });
@@ -516,7 +541,6 @@ document.addEventListener('keydown', e => {
 // ─── Remote cursors ───────────────────────────────────────
 const rcMap = {};
 
-// Đổi canvas coordinate → CSS pixel (vì canvas có thể scale)
 function canvasToCss(x, y) {
   const r = cv.getBoundingClientRect();
   return {
@@ -525,27 +549,36 @@ function canvasToCss(x, y) {
   };
 }
 
-function makeCursor(socketId, label, color2) {
+function makeCursor(socketId, label, col) {
   const el = document.createElement('div');
   el.className = 'rcursor';
   el.innerHTML = `
-    <svg width="14" height="18" viewBox="0 0 14 18" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))">
+    <svg width="14" height="18" viewBox="0 0 14 18"
+         style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))">
       <path d="M0 0 L0 14 L3.5 10 L6 17 L8 16 L5.5 9 L10 9 Z"
-            fill="${color2}" stroke="white" stroke-width="1" stroke-linejoin="round"/>
+            fill="${col}" stroke="white" stroke-width="1" stroke-linejoin="round"/>
     </svg>
-    <div class="rcursor-label" style="background:${color2}">${label}</div>`;
+    <div class="rcursor-label" style="background:${col}">${label}</div>`;
   document.getElementById('wrap').appendChild(el);
-  rcMap[socketId] = el;   // key = socket.id (không đổi)
+  rcMap[socketId] = el;
   return el;
+}
+
+// FIX: Throttle cursor emit — không flood server khi di chuột nhanh
+let lastCursorEmit = 0;
+const CURSOR_THROTTLE = 30; // ms
+
+function emitCursor(x, y) {
+  const now = Date.now();
+  if (now - lastCursorEmit < CURSOR_THROTTLE) return;
+  lastCursorEmit = now;
+  socket.emit('cursor', { x, y });
 }
 
 socket.on('cursor', ({ id, userId, color: c, x, y }) => {
   if (id === myId) return;
-  // Tìm cursor theo socket.id — nếu chưa có mới tạo
   let el = rcMap[id];
   if (!el) el = makeCursor(id, userId || id.slice(0,4), c || '#666');
-
-  // Đổi tọa độ canvas → CSS pixel
   const { cx, cy } = canvasToCss(x, y);
   el.style.left = cx + 'px';
   el.style.top  = cy + 'px';
@@ -560,17 +593,24 @@ socket.on('init', ({ history, me, users }) => {
   myId    = socket.id;
   myColor = me.color;
   document.getElementById('meTag').textContent = `Bạn: ${me.id}`;
-  document.getElementById('meTag').style.borderLeft = `3px solid ${me.color}`;
-  document.getElementById('meTag').style.paddingLeft = '7px';
+  document.getElementById('meTag').style.borderLeft   = `3px solid ${me.color}`;
+  document.getElementById('meTag').style.paddingLeft  = '7px';
+
+  // FIX: Clear canvas trước khi replay history
+  // (tránh vẽ đè nếu socket reconnect)
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, cv.width, cv.height);
   history.forEach(d => applyDraw(d));
+
   updateUserBadges(users);
 });
 
-socket.on('draw',  d => applyDraw(d));
+socket.on('draw', d => applyDraw(d));
 
 socket.on('clear', () => {
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, cv.width, cv.height);
+  // FIX: Dùng clearCanvas() thay vì chỉ fill white
+  // để cancel shape đang vẽ dở + clear overlay
+  clearCanvas();
 });
 
 socket.on('userList', users => {
@@ -582,12 +622,10 @@ function updateUserBadges(users) {
   const el = document.getElementById('userBadges');
   el.innerHTML = users.slice(0, 8).map(u =>
     `<div class="ubadge" style="background:${u.color}" title="${u.id}">${u.id}</div>`
-  ).join('') + (users.length > 8 ? `<div class="ubadge" style="background:#aaa">+${users.length-8}</div>` : '');
+  ).join('') + (users.length > 8
+    ? `<div class="ubadge" style="background:#aaa">+${users.length - 8}</div>`
+    : '');
 }
-
-// ─── Init ─────────────────────────────────────────────────
-window.addEventListener('load', fitCanvas);
-window.addEventListener('resize', fitCanvas);
 </script>
 </body>
 </html>
