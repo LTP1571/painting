@@ -434,9 +434,10 @@ function startDraw(e) {
 
   if (['line','rect','circle'].includes(tool)) {
     snap = ctx.getImageData(0, 0, cv.width, cv.height);
+    return;
   }
 
-  // Dot at start
+  // Dot at start — chỉ cho pen/brush/eraser
   const d = mkData('dot', sx, sy, sx, sy);
   applyDraw(d);
   socket.emit('draw', d);
