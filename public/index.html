@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🎨 Bảng Vẽ Cộng Đồng (Pro)</title>
+<title>🎨 Bảng Vẽ Cộng Đồng Pro</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  background:#d0cdc8;height:100vh;height:100dvh;
+  background:#1e1e24;color:#fff;height:100vh;height:100dvh;
   display:flex;flex-direction:column;overflow:hidden;
   user-select:none;-webkit-user-select:none;
 }
 
 /* ── Header ── */
 #header{
-  background:#f5f3f0;border-bottom:1px solid #c8c5c0;
+  background:#18181c;border-bottom:1px solid #2d2d34;
   padding:0 12px;height:42px;display:flex;align-items:center;
-  gap:10px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.08);
+  gap:10px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.3);
 }
-#header h1{font-size:14px;font-weight:700;color:#1a1a1a;white-space:nowrap}
-.live-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:#666}
+#header h1{font-size:14px;font-weight:700;color:#ffffff;white-space:nowrap}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:#aaa}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:blink 1.8s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 #userBadges{display:flex;gap:3px;margin-left:4px}
@@ -29,137 +29,235 @@ body{
   width:24px;height:24px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:9px;font-weight:700;color:#fff;
-  border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.1);
+  border:2px solid #2d2d34;box-shadow:0 0 0 1px rgba(0,0,0,.3);
 }
-.me-tag{font-size:11px;background:#e8e5e0;color:#555;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.me-tag{font-size:11px;background:#2d2d34;color:#ccc;padding:2px 7px;border-radius:20px;white-space:nowrap}
 
 /* ── Toolbar ── */
 #toolbar{
-  background:#f5f3f0;border-bottom:2px solid #c0bdb8;
+  background:#18181c;border-bottom:2px solid #2d2d34;
   padding:5px 10px;display:flex;align-items:center;
-  gap:4px;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  gap:4px;flex-shrink:0;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;
 }
 #toolbar::-webkit-scrollbar{display:none}
 
+/* Nhóm tool */
 .tg{
   display:flex;align-items:center;gap:2px;
   padding-right:8px;margin-right:4px;
-  border-right:1px solid #d0cdc8;flex-shrink:0;
+  border-right:1px solid #2d2d34;flex-shrink:0;
 }
 .tg:last-child{border:none;padding:0;margin:0}
 
 .tbtn{
-  width:34px;height:34px;border:1px solid #d0cdc8;border-radius:6px;
-  background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:14px;color:#444;transition:background .1s,border-color .1s;
-  flex-shrink:0;-webkit-tap-highlight-color:transparent;position:relative;
+  width:34px;height:34px;
+  border:1px solid #3a3a42;border-radius:6px;
+  background:#24242a;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#e2e8f0;
+  transition:background .1s,border-color .1s,box-shadow .1s;
+  flex-shrink:0;-webkit-tap-highlight-color:transparent;
+  position:relative;
 }
-.tbtn:hover{background:#e8f4ff;border-color:#93c5fd}
-.tbtn.on{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd;box-shadow:inset 0 1px 2px rgba(0,0,0,.1)}
+.tbtn:hover{background:#2d2d34;border-color:#3b82f6}
+.tbtn:active{background:#1d4ed8}
+.tbtn.on{background:#2563eb;color:#fff;border-color:#60a5fa;box-shadow:inset 0 1px 2px rgba(0,0,0,.2)}
 .tbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tbtn[data-key]::after{
-  content:attr(data-key);position:absolute;bottom:2px;right:3px;font-size:8px;color:#aaa;font-weight:600;
+  content:attr(data-key);
+  position:absolute;bottom:2px;right:3px;
+  font-size:8px;color:#888;font-weight:600;
 }
 
+/* Zoom controls */
 .zoom-btn{
-  width:28px;height:28px;border:1px solid #d0cdc8;border-radius:5px;
-  background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:700;color:#444;flex-shrink:0;
+  width:28px;height:28px;border:1px solid #3a3a42;border-radius:5px;
+  background:#24242a;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#fff;
+  -webkit-tap-highlight-color:transparent;
+  flex-shrink:0;
 }
-#zoomVal{font-size:11px;color:#666;min-width:38px;text-align:center;font-weight:600}
+.zoom-btn:hover{background:#2d2d34}
+#zoomVal{font-size:11px;color:#ccc;min-width:38px;text-align:center;font-weight:600}
 
-label.lbl{font-size:11px;color:#888;white-space:nowrap}
+label.lbl{font-size:11px;color:#aaa;white-space:nowrap}
 input[type=range]{width:70px;accent-color:#3b82f6;cursor:pointer;flex-shrink:0}
-input[type=color]{width:30px;height:30px;border:1px solid #d0cdc8;border-radius:6px;padding:2px;cursor:pointer;background:#fff;flex-shrink:0}
-.swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .12s;flex-shrink:0}
+input[type=color]{
+  width:30px;height:30px;
+  border:1px solid #3a3a42;border-radius:6px;
+  padding:2px;cursor:pointer;background:#24242a;flex-shrink:0;
+}
+.swatch{
+  width:20px;height:20px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:transform .12s;
+  flex-shrink:0;-webkit-tap-highlight-color:transparent;
+}
 .swatch:hover{transform:scale(1.2)}
-.swatch.on{border-color:#1a1a1a!important;transform:scale(1.1)}
-.vl{width:1px;height:20px;background:#d0cdc8;flex-shrink:0;margin:0 3px}
+.swatch.on{border-color:#fff!important;transform:scale(1.1)}
+
+.vl{width:1px;height:20px;background:#2d2d34;flex-shrink:0;margin:0 3px}
 
 .btn-undo,.btn-redo{
-  width:34px;height:34px;border:1px solid #d0cdc8;border-radius:6px;
-  background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:14px;color:#444;flex-shrink:0;
+  width:34px;height:34px;border:1px solid #3a3a42;border-radius:6px;
+  background:#24242a;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#fff;transition:background .1s;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
 }
-.btn-undo:disabled,.btn-redo:disabled{opacity:.35;cursor:not-allowed}
+.btn-undo:hover,.btn-redo:hover{background:#2d2d34}
+.btn-undo:disabled,.btn-redo:disabled{opacity:.25;cursor:not-allowed}
 
-/* ── Workspace & Sidebar Layout ── */
-#main-container{
+.btn-clear{
+  padding:5px 10px;font-size:12px;
+  border:1px solid #7f1d1d;border-radius:6px;
+  background:#451a1a;color:#fca5a5;cursor:pointer;
+  white-space:nowrap;-webkit-tap-highlight-color:transparent;flex-shrink:0;
+}
+.btn-clear:hover{background:#7f1d1d}
+
+#szDot{border-radius:50%;background:#fff;transition:all .15s}
+
+/* ── Work Area Layout ── */
+#main-container {
   display:flex;flex:1;overflow:hidden;position:relative;
 }
 
 #area{
-  flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;
-  position:relative;background:#d0cdc8;touch-action:none;
+  flex:1;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;background:#242428;
+  touch-action:none;-ms-touch-action:none;
 }
 
 #wrap{
-  position:relative;line-height:0;transform-origin:0 0;will-change:transform;
-  width:1400px;height:900px;
+  position:relative;line-height:0;
+  transform-origin:0 0;will-change:transform;
 }
 
-/* Các lớp Canvas xếp chồng */
 .layer-canvas{
   position:absolute;top:0;left:0;display:block;
-  box-shadow:0 2px 20px rgba(0,0,0,.15);background:transparent;
+  box-shadow:0 2px 20px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.05);
+  touch-action:none;-ms-touch-action:none;
 }
-.layer-canvas.bg-base{background:#fff} /* Chỉ lớp nền đáy có màu trắng */
+#ov{position:absolute;top:0;left:0;pointer-events:none;touch-action:none;z-index:99;}
 
-#ov{position:absolute;top:0;left:0;z-index:999;cursor:crosshair;background:transparent}
-
-/* Sidebar quản lý Page & Layer */
-#sidebar{
-  width:230px;background:#f5f3f0;border-left:2px solid #c0bdb8;
-  display:flex;flex-direction:column;flex-shrink:0;z-index:10;
+/* Eyedropper overlay */
+#eyedropOverlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  cursor:crosshair;z-index:120;display:none;
+  background:rgba(59,130,246,.05);
 }
-.sb-section{
-  flex:1;display:flex;flex-direction:column;padding:10px;
-  border-bottom:1px solid #c8c5c0;overflow-y:auto;
-}
-.sb-section:last-child{border-bottom:none}
-.sb-title{
-  font-size:12px;font-weight:700;color:#444;margin-bottom:8px;
-  display:flex;justify-content:between;align-items:center;
-  text-transform:uppercase;letter-spacing:0.5px;
-}
-.sb-btn{
-  background:#3b82f6;color:#fff;border:none;padding:3px 8px;
-  border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;
-}
-.sb-btn:hover{background:#2563eb}
-.sb-list{display:flex;flex-direction:column;gap:4px}
-.sb-item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:6px 8px;background:#fff;border:1px solid #d0cdc8;
-  border-radius:6px;cursor:pointer;font-size:12px;color:#333;
-}
-.sb-item.active{background:#dbeafe;border-color:#93c5fd;font-weight:600;color:#1d4ed8}
-.sb-item-left{display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sb-item-ops{display:flex;align-items:center;gap:5px}
-.op-icon{cursor:pointer;opacity:0.6;font-size:13px}
-.op-icon:hover{opacity:1;color:#dc2626}
-
-/* Components khác */
-#eyedropOverlay{position:absolute;top:0;left:0;right:0;bottom:0;cursor:crosshair;z-index:1000;display:none}
 #eyedropOverlay.active{display:block}
+
+/* Loupe */
 #loupe{
   position:absolute;width:80px;height:80px;border-radius:50%;
-  border:3px solid #333;box-shadow:0 2px 8px rgba(0,0,0,.4);
-  pointer-events:none;display:none;z-index:1001;overflow:hidden;background:#fff;
+  border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.6);
+  pointer-events:none;display:none;z-index:130;overflow:hidden;
+  image-rendering:pixelated;background:#fff;
 }
-#loupeCanvas{width:80px;height:80px;image-rendering:pixelated}
-#loupeColor{position:absolute;bottom:0;left:0;right:0;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
-#panHint,#zoomHint{position:absolute;background:rgba(0,0,0,.65);color:#fff;padding:4px 12px;border-radius:20px;font-size:11px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:10}
-#panHint{top:10px;left:50%;transform:translateX(-50%)}
+#loupeCanvas{width:80px;height:80px}
+#loupeColor{
+  position:absolute;bottom:0;left:0;right:0;height:20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.8);
+}
+
+/* Indicators */
+#panHint{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.75);color:#fff;
+  padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;
+  pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;
+  white-space:nowrap;
+}
 #panHint.show{opacity:1}
-#zoomHint{bottom:14px;right:14px;opacity:0;transition:opacity .3s}
+
+#zoomHint{
+  position:absolute;bottom:14px;right:14px;
+  background:rgba(0,0,0,.7);color:#fff;
+  padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;
+  pointer-events:none;opacity:0;transition:opacity .3s;z-index:10;
+}
 #zoomHint.show{opacity:1}
-.rcursor{position:absolute;pointer-events:none;transition:left .05s linear,top .05s linear;z-index:998}
-.rcursor-label{font-size:10px;font-weight:600;color:#fff;border-radius:4px;padding:1px 5px;margin-top:1px;white-space:nowrap}
-#status{background:#f5f3f0;border-top:1px solid #c8c5c0;padding:3px 12px;display:flex;gap:12px;font-size:11px;color:#999;flex-shrink:0;overflow-x:auto}
-#status span b{color:#555;font-weight:600}
-#textInput{position:absolute;display:none;border:2px dashed #3b82f6;background:transparent;font-size:16px;color:#000;outline:none;min-width:80px;min-height:28px;resize:none;overflow:hidden;z-index:1002;padding:2px 4px;font-family:inherit}
+
+/* Remote cursors */
+.rcursor{
+  position:absolute;pointer-events:none;
+  transition:left .05s linear,top .05s linear;
+  transform:translate(-2px,-2px);z-index:105;
+}
+.rcursor-label{
+  font-size:10px;font-weight:600;color:#fff;border-radius:4px;
+  padding:1px 5px;margin-top:1px;white-space:nowrap;
+}
+
+/* ── Sidebar (Pages & Layers) ── */
+#sidebar {
+  width:260px;background:#18181c;border-left:1px solid #2d2d34;
+  display:flex;flex-direction:column;flex-shrink:0;z-index:10;
+}
+.sb-section {
+  flex:1;display:flex;flex-direction:column;
+  border-bottom:1px solid #2d2d34;overflow:hidden;
+}
+.sb-section:last-child {border-bottom:none}
+.sb-header {
+  padding:10px 12px;display:flex;justify-content:between;align-items:center;
+  background:#131316;color:#a1a1aa;font-size:11px;font-weight:700;
+  letter-spacing:0.5px;justify-content:space-between;
+}
+.sb-add-btn {
+  background:#2563eb;color:#fff;border:none;padding:3px 9px;
+  border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;
+  transition:background .2s;
+}
+.sb-add-btn:hover {background:#1d4ed8}
+.sb-list {
+  flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:5px;
+}
+.sb-item {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;background:#222226;border:1px solid #2d2d34;
+  border-radius:6px;color:#e4e4e7;font-size:12px;cursor:pointer;
+  transition:all .15s;
+}
+.sb-item:hover {background:#2a2a30;border-color:#3f3f46}
+.sb-item.active {
+  background:#2d2d34;border-color:#3b82f6;font-weight:600;
+}
+.sb-item-left {display:flex;align-items:center;gap:6px}
+.sb-item-actions {display:flex;align-items:center;gap:4px}
+.sb-action-btn {
+  background:transparent;border:none;color:#71717a;cursor:pointer;
+  font-size:12px;padding:3px;display:flex;align-items:center;justify-content:center;
+  border-radius:4px;transition:all .15s;
+}
+.sb-action-btn:hover {color:#ef4444;background:rgba(239,68,68,.15)}
+.sb-action-btn.toggle-visible:hover {color:#3b82f6;background:rgba(59,130,246,.15)}
+
+/* ── Status bar ── */
+#status{
+  background:#18181c;border-top:1px solid #2d2d34;
+  padding:3px 12px;display:flex;gap:12px;
+  font-size:11px;color:#aaa;flex-shrink:0;
+  overflow-x:auto;white-space:nowrap;scrollbar-width:none;
+}
+#status::-webkit-scrollbar{display:none}
+#status span b{color:#eee;font-weight:600}
+
+/* Text input overlay */
+#textInput{
+  position:absolute;display:none;
+  border:2px dashed #3b82f6;background:transparent;
+  font-size:16px;color:#000;outline:none;
+  min-width:80px;min-height:28px;
+  resize:none;overflow:hidden;
+  z-index:115;padding:2px 4px;
+  cursor:text;font-family:inherit;
+}
 </style>
 </head>
 <body>
@@ -222,16 +320,24 @@ input[type=color]{width:30px;height:30px;border:1px solid #d0cdc8;border-radius:
   </div>
 
   <div class="tg" style="gap:5px">
+    <label class="lbl">Mờ</label>
+    <input type="range" id="opSlider" min="5" max="100" value="100" step="5" oninput="setOpacity(+this.value)">
+    <label class="lbl" id="opVal">100%</label>
+  </div>
+
+  <div class="tg" style="gap:5px">
     <input type="checkbox" id="fillChk" style="cursor:pointer;width:14px;height:14px">
-    <label class="lbl" for="fillChk" style="cursor:pointer">Tô hình</label>
+    <label class="lbl" for="fillChk" style="cursor:pointer">Tô màu</label>
   </div>
 
   <div class="tg" style="gap:4px">
     <button class="zoom-btn" onclick="doZoom(-1)" title="Thu nhỏ [-]">−</button>
     <span id="zoomVal">100%</span>
     <button class="zoom-btn" onclick="doZoom(+1)" title="Phóng to [+]">+</button>
-    <button class="zoom-btn" onclick="fitViewportToArea()" title="Reset zoom [0]">⊡</button>
+    <button class="zoom-btn" onclick="fitViewportToArea()" title="Reset zoom [0]" style="font-size:11px;font-weight:700">⊡</button>
   </div>
+
+  <button class="btn-clear" onclick="doClear()">🗑 Xóa tất cả</button>
 </div>
 
 <div id="main-container">
@@ -245,24 +351,24 @@ input[type=color]{width:30px;height:30px;border:1px solid #d0cdc8;border-radius:
       <canvas id="loupeCanvas" width="80" height="80"></canvas>
       <div id="loupeColor"></div>
     </div>
-    <div id="panHint">✌️ Di chuyển / Thu phóng bằng 2 ngón tay</div>
+    <div id="panHint">✌️ Di chuyển / Thu phóng</div>
     <div id="zoomHint">100%</div>
   </div>
 
   <div id="sidebar">
     <div class="sb-section">
-      <div class="sb-title">
-        <span>Sổ vẽ (Pages)</span>
-        <button class="sb-btn" onclick="addNewPagePrompt()">+ Trang</button>
+      <div class="sb-header">
+        <span>SỔ VẼ (PAGES)</span>
+        <button class="sb-add-btn" onclick="userAddPage()">+ Trang</button>
       </div>
-      <div class="sb-list" id="pageListContainer"></div>
+      <div id="pagesList" class="sb-list"></div>
     </div>
     <div class="sb-section">
-      <div class="sb-title">
-        <span>Lớp vẽ (Layers)</span>
-        <button class="sb-btn" onclick="addNewLayerPrompt()">+ Lớp</button>
+      <div class="sb-header">
+        <span>LỚP VẼ (LAYERS)</span>
+        <button class="sb-add-btn" onclick="userAddLayer()">+ Lớp</button>
       </div>
-      <div class="sb-list" id="layerListContainer"></div>
+      <div id="layersList" class="sb-list"></div>
     </div>
   </div>
 </div>
@@ -272,219 +378,41 @@ input[type=color]{width:30px;height:30px;border:1px solid #d0cdc8;border-radius:
   <span>Màu: <b id="stColor">#000000</b></span>
   <span>Cỡ: <b id="stSize">4px</b></span>
   <span>Vị trí: <b id="stPos">—</b></span>
-  <span>Trang: <b id="stPage">—</b></span>
+  <span>Zoom: <b id="stZoom">100%</b></span>
 </div>
 
 <script>
+// ══════════════════════════════════════════════════════════
+//  SOCKET
+// ══════════════════════════════════════════════════════════
 const socket = io();
 
-const ov = document.getElementById('ov');
+// ══════════════════════════════════════════════════════════
+//  CANVAS REFS
+// ══════════════════════════════════════════════════════════
+const ov   = document.getElementById('ov');
 const octx = ov.getContext('2d');
 const wrap = document.getElementById('wrap');
 const area = document.getElementById('area');
 
+// ══════════════════════════════════════════════════════════
+//  VIEWPORT (pan + zoom)
+// ══════════════════════════════════════════════════════════
 const CANVAS_W = 1400;
 const CANVAS_H = 900;
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 10;
 let vpX = 0, vpY = 0, vpScale = 1;
 
-// ══════════════════════════════════════════════════════════
-//  Cấu trúc Dữ liệu Động cho Page & Layer
-// ══════════════════════════════════════════════════════════
-let pages = []; 
-let activePageId = null;
-let activeLayerId = null;
-
-let tool = 'pen', color = '#000000', size = 4, opacity = 1, drawing = false;
-let sx, sy, lx, ly;
-let myId = null, myColor = '#555';
-
-// Undo/Redo stack riêng biệt theo từng Page để tránh loạn dữ liệu
-let pageHistories = {}; 
-const MAX_UNDO = 25;
-
-function initCanvasSystem() {
-  ov.width = CANVAS_W;
-  ov.height = CANVAS_H;
-  
-  // Khởi tạo trang mặc định ban đầu nếu hệ thống rỗng
-  if (pages.length === 0) {
-    createPageLocal('page_1', 'Trang 1');
-  }
-  switchPage('page_1');
-  fitViewportToArea();
-}
-
-function ensurePageAndLayer(pageId, layerId, layerName = 'Lớp mới') {
-  let page = pages.find(p => p.id === pageId);
-  if (!page) {
-    page = { id: pageId, name: 'Trang ' + (pages.length + 1), layers: [] };
-    pages.push(page);
-    pageHistories[pageId] = { undo: [], redo: [] };
-    renderPageUI();
-  }
-  
-  let layer = page.layers.find(l => l.id === layerId);
-  if (!layer) {
-    const cvNew = document.createElement('canvas');
-    cvNew.id = `canvas_${pageId}_${layerId}`;
-    cvNew.width = CANVAS_W;
-    cvNew.height = CANVAS_H;
-    cvNew.className = 'layer-canvas';
-    if (page.layers.length === 0) {
-      cvNew.classList.add('bg-base');
-    }
-    
-    // Đảm bảo các Canvas của Layer nằm dưới Canvas hiển thị xem trước (ov)
-    wrap.insertBefore(cvNew, ov);
-    
-    const ctxNew = cvNew.getContext('2d');
-    if (page.layers.length === 0) {
-      ctxNew.fillStyle = '#ffffff';
-      ctxNew.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    }
-    
-    layer = { id: layerId, name: layerName, visible: true, canvas: cvNew, ctx: ctxNew };
-    page.layers.push(layer);
-    renderLayerUI();
-    refreshLayersVisibility();
-  }
-}
-
-function createPageLocal(pageId, name) {
-  ensurePageAndLayer(pageId, 'layer_bg', 'Lớp nền');
-  ensurePageAndLayer(pageId, 'layer_1', 'Lớp 1');
-  socket.emit('structure_change', { type: 'add_page', pageId, name });
-}
-
-function addNewPagePrompt() {
-  const name = prompt('Nhập tên trang mới:', 'Trang ' + (pages.length + 1));
-  if (!name) return;
-  const pId = 'page_' + Date.now();
-  createPageLocal(pId, name);
-  switchPage(pId);
-}
-
-function addNewLayerPrompt() {
-  if (!activePageId) return;
-  const page = pages.find(p => p.id === activePageId);
-  const name = prompt('Nhập tên lớp mới:', 'Lớp ' + (page.layers.length + 1));
-  if (!name) return;
-  const lId = 'layer_' + Date.now();
-  ensurePageAndLayer(activePageId, lId, name);
-  activeLayerId = lId;
-  renderLayerUI();
-  socket.emit('structure_change', { type: 'add_layer', pageId: activePageId, layerId: lId, name });
-}
-
-function switchPage(pageId) {
-  activePageId = pageId;
-  const page = pages.find(p => p.id === pageId);
-  if (page && page.layers.length > 0) {
-    activeLayerId = page.layers[page.layers.length - 1].id; // Chọn lớp trên cùng làm mặc định
-  }
-  
-  // Ẩn/Hiện toàn bộ Canvas thuộc trang được chọn thông qua DOM trưng bày
-  pages.forEach(p => {
-    p.layers.forEach(l => {
-      l.canvas.style.display = (p.id === pageId && l.visible) ? 'block' : 'none';
-    });
-  });
-  
-  renderPageUI();
-  renderLayerUI();
-  updateUndoButtons();
-  document.getElementById('stPage').textContent = page ? page.name : '—';
-}
-
-function refreshLayersVisibility() {
-  pages.forEach(p => {
-    p.layers.forEach(l => {
-      l.canvas.style.display = (p.id === activePageId && l.visible) ? 'block' : 'none';
-    });
-  });
-}
-
-function toggleLayerVisibility(layerId, e) {
-  e.stopPropagation();
-  const page = pages.find(p => p.id === activePageId);
-  const layer = page?.layers.find(l => l.id === layerId);
-  if (layer) {
-    layer.visible = !layer.visible;
-    refreshLayersVisibility();
-    renderLayerUI();
-  }
-}
-
-function deleteLayerLocal(layerId, e) {
-  e.stopPropagation();
-  const page = pages.find(p => p.id === activePageId);
-  if (!page || page.layers.length <= 1) {
-    alert('Không thể xóa lớp cuối cùng của trang!');
-    return;
-  }
-  if (!confirm('Bạn có chắc muốn xóa lớp này?')) return;
-  
-  const idx = page.layers.findIndex(l => l.id === layerId);
-  if (idx !== -1) {
-    page.layers[idx].canvas.remove();
-    page.layers.splice(idx, 1);
-    if (activeLayerId === layerId) {
-      activeLayerId = page.layers[page.layers.length - 1].id;
-    }
-    renderLayerUI();
-    refreshLayersVisibility();
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-//  Render UI Giao Diện Sidebar
-// ══════════════════════════════════════════════════════════
-function renderPageUI() {
-  const container = document.getElementById('pageListContainer');
-  container.innerHTML = pages.map(p => `
-    <div class="sb-item ${p.id === activePageId ? 'active' : ''}" onclick="switchPage('${p.id}')">
-      <div class="sb-item-left">📄 ${p.name}</div>
-    </div>
-  `).join('');
-}
-
-function renderLayerUI() {
-  const container = document.getElementById('layerListContainer');
-  const page = pages.find(p => p.id === activePageId);
-  if (!page) { container.innerHTML = ''; return; }
-  
-  // Đảo mảng hiển thị lớp trên cùng lên trước cho đúng logic thiết kế đồ họa
-  const renderList = [...page.layers].reverse();
-  container.innerHTML = renderList.map(l => `
-    <div class="sb-item ${l.id === activeLayerId ? 'active' : ''}" onclick="activeLayerId='${l.id}'; renderLayerUI();">
-      <div class="sb-item-left">🎨 ${l.name}</div>
-      <div class="sb-item-ops">
-        <span class="op-icon" onclick="toggleLayerVisibility('${l.id}', event)">${l.visible ? '👁️' : '❌'}</span>
-        <span class="op-icon" onclick="deleteLayerLocal('${l.id}', event)">🗑</span>
-      </div>
-    </div>
-  `).join('');
-}
-
-function getActiveCtx() {
-  const page = pages.find(p => p.id === activePageId);
-  const layer = page?.layers.find(l => l.id === activeLayerId);
-  return layer ? layer.ctx : null;
-}
-
-// ══════════════════════════════════════════════════════════
-//  Uptade Bộ Lọc Thu Phóng & Kéo Góc (Pan/Zoom)
-// ══════════════════════════════════════════════════════════
 function applyViewport() {
   wrap.style.transform = `translate(${vpX}px,${vpY}px) scale(${vpScale})`;
   const pct = Math.round(vpScale * 100) + '%';
-  document.getElementById('zoomVal').textContent = pct;
+  document.getElementById('zoomVal').textContent  = pct;
+  document.getElementById('stZoom').textContent   = pct;
 }
 
 function clampViewport() {
-  const W = CANVAS_W * vpScale;
+  const W = CANVAS_W  * vpScale;
   const H = CANVAS_H * vpScale;
   const aw = area.clientWidth;
   const ah = area.clientHeight;
@@ -493,11 +421,11 @@ function clampViewport() {
 }
 
 function fitViewportToArea() {
-  const scaleX = area.clientWidth / CANVAS_W;
+  const scaleX = area.clientWidth  / CANVAS_W;
   const scaleY = area.clientHeight / CANVAS_H;
   vpScale = Math.min(scaleX, scaleY) * 0.96;
   vpScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale));
-  vpX = (area.clientWidth - CANVAS_W * vpScale) / 2;
+  vpX = (area.clientWidth  - CANVAS_W  * vpScale) / 2;
   vpY = (area.clientHeight - CANVAS_H * vpScale) / 2;
   applyViewport();
 }
@@ -505,12 +433,14 @@ function fitViewportToArea() {
 function doZoom(dir) {
   const step = dir > 0 ? 1.25 : 0.8;
   const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale * step));
-  const cx2 = area.clientWidth / 2;
+  const cx2 = area.clientWidth  / 2;
   const cy2 = area.clientHeight / 2;
   vpX = cx2 - (cx2 - vpX) * (newScale / vpScale);
   vpY = cy2 - (cy2 - vpY) * (newScale / vpScale);
   vpScale = newScale;
-  clampViewport(); applyViewport(); flashZoom();
+  clampViewport();
+  applyViewport();
+  flashZoom();
 }
 
 let zoomHintTimer;
@@ -523,153 +453,483 @@ function flashZoom() {
 }
 
 // ══════════════════════════════════════════════════════════
-//  Hệ Thống Hoàn Tác Theo Từng Trang (Undo/Redo System)
+//  PAGES & LAYERS STATE MANAGEMENT
 // ══════════════════════════════════════════════════════════
-function pushUndo() {
-  if (!activePageId || !activeLayerId) return;
-  const page = pages.find(p => p.id === activePageId);
-  const layer = page?.layers.find(l => l.id === activeLayerId);
-  if (!layer) return;
+let pages = []; 
+let currentPageId = null;
 
-  const history = pageHistories[activePageId];
-  history.undo.push({
-    layerId: activeLayerId,
-    snap: layer.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H)
+function getCurrentPage() {
+  return pages.find(p => p.id === currentPageId);
+}
+
+function getCurrentLayer() {
+  const cp = getCurrentPage();
+  if (!cp) return null;
+  return cp.layers.find(l => l.id === cp.activeLayerId);
+}
+
+function createPageStructure(pageId, name) {
+  const pId = pageId || 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+  const pName = name || 'Trang ' + (pages.length + 1);
+  
+  const pageObj = {
+    id: pId,
+    name: pName,
+    layers: [],
+    activeLayerId: null
+  };
+  
+  pages.push(pageObj);
+  
+  // Tự động tạo Layer 1 làm lớp nền gốc cho Trang mới
+  createLayerStructure(pId, null, 'Lớp 1');
+  
+  if (!currentPageId) currentPageId = pId;
+  
+  renderPagesList();
+  return pageObj;
+}
+
+function createLayerStructure(pageId, layerId, name) {
+  const page = pages.find(p => p.id === pageId);
+  if (!page) return null;
+  
+  const lId = layerId || 'l_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+  const lName = name || 'Lớp ' + (page.layers.length + 1);
+  
+  const el = document.createElement('canvas');
+  el.className = 'layer-canvas';
+  el.width = CANVAS_W;
+  el.height = CANVAS_H;
+  
+  const layerCtx = el.getContext('2d');
+  if (page.layers.length === 0) {
+    layerCtx.fillStyle = '#ffffff';
+    layerCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  }
+  
+  const layerObj = {
+    id: lId,
+    name: lName,
+    visible: true,
+    canvas: el,
+    ctx: layerCtx
+  };
+  
+  page.layers.push(layerObj);
+  page.activeLayerId = lId;
+  
+  // Chèn Canvas vào DOM (Xếp dưới khung vẽ preview mặt định #ov)
+  wrap.insertBefore(el, ov);
+  
+  updateLayersVisibility();
+  renderLayersList();
+  return layerObj;
+}
+
+function switchPage(pageId) {
+  if (tool === 'text') commitText();
+  currentPageId = pageId;
+  undoStack = []; redoStack = []; // Reset cục bộ undo khi chuyển trang tránh nhầm ngữ cảnh
+  updateLayersVisibility();
+  renderPagesList();
+  renderLayersList();
+  updateUndoButtons();
+}
+
+function switchLayer(layerId) {
+  const cp = getCurrentPage();
+  if (!cp) return;
+  cp.activeLayerId = layerId;
+  renderLayersList();
+}
+
+function toggleLayerVisibility(layerId) {
+  const cp = getCurrentPage();
+  if (!cp) return;
+  const layer = cp.layers.find(l => l.id === layerId);
+  if (!layer) return;
+  layer.visible = !layer.visible;
+  updateLayersVisibility();
+  renderLayersList();
+}
+
+function deletePage(pageId, isRemote = false) {
+  if (pages.length <= 1) {
+    alert('Không thể xóa! Phải giữ lại ít nhất một trang vẽ.');
+    return;
+  }
+  const idx = pages.findIndex(p => p.id === pageId);
+  if (idx === -1) return;
+  
+  // Gỡ toàn bộ các canvas phần tử của trang khỏi DOM
+  pages[idx].layers.forEach(l => l.canvas.remove());
+  pages.splice(idx, 1);
+  
+  if (currentPageId === pageId) {
+    currentPageId = pages[Math.min(idx, pages.length - 1)].id;
+  }
+  
+  if (!isRemote) {
+    socket.emit('draw', { type: 'action-delete-page', pageId: pageId });
+  }
+  
+  updateLayersVisibility();
+  renderPagesList();
+  renderLayersList();
+}
+
+function updateLayersVisibility() {
+  pages.forEach(p => {
+    const isCurrentPage = (p.id === currentPageId);
+    p.layers.forEach(l => {
+      if (isCurrentPage && l.visible) {
+        l.canvas.style.display = 'block';
+      } else {
+        l.canvas.style.display = 'none';
+      }
+    });
   });
-  if (history.undo.length > MAX_UNDO) history.undo.shift();
-  history.redo = [];
+}
+
+// ── Render Sidebar UI Component ──────────────────────────
+function renderPagesList() {
+  const container = document.getElementById('pagesList');
+  container.innerHTML = pages.map(p => {
+    const isActive = p.id === currentPageId ? 'active' : '';
+    return `
+      <div class="sb-item ${isActive}" onclick="switchPage('${p.id}')">
+        <div class="sb-item-left">📄 <span>${p.name}</span></div>
+        <div class="sb-item-actions">
+          <button class="sb-action-btn" title="Xóa trang này" onclick="event.stopPropagation(); deletePage('${p.id}')">🗑</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderLayersList() {
+  const container = document.getElementById('layersList');
+  const cp = getCurrentPage();
+  if (!cp) return;
+  
+  // Đảo mảng render để Lớp mới nhất (Z-index cao nhất) nằm trên cùng danh sách UI
+  container.innerHTML = [...cp.layers].reverse().map(l => {
+    const isActive = l.id === cp.activeLayerId ? 'active' : '';
+    const iconEye = l.visible ? '👁' : '❌';
+    return `
+      <div class="sb-item ${isActive}" onclick="switchLayer('${l.id}')">
+        <div class="sb-item-left">🥞 <span>${l.name}</span></div>
+        <div class="sb-item-actions">
+          <button class="sb-action-btn toggle-visible" title="Ẩn/Hiện lớp" onclick="event.stopPropagation(); toggleLayerVisibility('${l.id}')">${iconEye}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function userAddPage() {
+  const nPage = createPageStructure();
+  socket.emit('draw', { type: 'action-add-page', pageId: nPage.id, name: nPage.name });
+  switchPage(nPage.id);
+}
+
+function userAddLayer() {
+  if (!currentPageId) return;
+  const cp = getCurrentPage();
+  const nLayer = createLayerStructure(currentPageId);
+  socket.emit('draw', { type: 'action-add-layer', pageId: currentPageId, layerId: nLayer.id, name: nLayer.name });
+  switchLayer(nLayer.id);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CANVAS INIT
+// ══════════════════════════════════════════════════════════
+function initCanvas() {
+  ov.width  = CANVAS_W;
+  ov.height = CANVAS_H;
+  octx.clearRect(0,0,CANVAS_W,CANVAS_H);
+  
+  pages.forEach(p => p.layers.forEach(l => l.canvas.remove()));
+  pages = [];
+  currentPageId = null;
+  
+  createPageStructure(null, 'Trang 1');
+  snap = null; drawing = false;
+  fitViewportToArea();
+}
+
+window.addEventListener('load', initCanvas);
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(fitViewportToArea, 200);
+});
+
+// ══════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════
+let tool    = 'pen';
+let color   = '#000000';
+let size    = 4;
+let opacity = 1;
+let drawing = false;
+let sx, sy, lx, ly;
+let snap    = null;
+let myId    = null;
+let myColor = '#555';
+
+// ── Undo / Redo stack (local context) ───────────────────
+const MAX_UNDO = 30;
+let undoStack = [];
+let redoStack = [];
+
+function pushUndo() {
+  const cl = getCurrentLayer();
+  if (!cl) return;
+  undoStack.push(cl.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H));
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  redoStack = []; 
   updateUndoButtons();
 }
 
 function doUndo() {
-  const history = pageHistories[activePageId];
-  if (!history || !history.undo.length) return;
-
-  const page = pages.find(p => p.id === activePageId);
-  const action = history.undo.pop();
-  const layer = page?.layers.find(l => l.id === action.layerId);
-
-  if (layer) {
-    history.redo.push({
-      layerId: action.layerId,
-      snap: layer.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H)
-    });
-    layer.ctx.putImageData(action.snap, 0, 0);
-  }
+  if (!undoStack.length) return;
+  const cl = getCurrentLayer();
+  if (!cl) return;
+  redoStack.push(cl.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H));
+  cl.ctx.putImageData(undoStack.pop(), 0, 0);
   updateUndoButtons();
 }
 
 function doRedo() {
-  const history = pageHistories[activePageId];
-  if (!history || !history.redo.length) return;
-
-  const page = pages.find(p => p.id === activePageId);
-  const action = history.redo.pop();
-  const layer = page?.layers.find(l => l.id === action.layerId);
-
-  if (layer) {
-    history.undo.push({
-      layerId: action.layerId,
-      snap: layer.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H)
-    });
-    layer.ctx.putImageData(action.snap, 0, 0);
-  }
+  if (!redoStack.length) return;
+  const cl = getCurrentLayer();
+  if (!cl) return;
+  undoStack.push(cl.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H));
+  cl.ctx.putImageData(redoStack.pop(), 0, 0);
   updateUndoButtons();
 }
 
 function updateUndoButtons() {
-  const history = pageHistories[activePageId];
-  document.getElementById('btnUndo').disabled = !history || !history.undo.length;
-  document.getElementById('btnRedo').disabled = !history || !history.redo.length;
+  document.getElementById('btnUndo').disabled = !undoStack.length;
+  document.getElementById('btnRedo').disabled = !redoStack.length;
 }
 
 // ══════════════════════════════════════════════════════════
-//  XỬ LÝ ĐỒ HỌA & RENDER NÉT VẼ
+//  COLOUR PALETTE
+// ══════════════════════════════════════════════════════════
+const PRESETS = [
+  '#000000','#ffffff','#6b7280','#d1d5db',
+  '#ef4444','#f97316','#eab308','#22c55e',
+  '#3b82f6','#8b5cf6','#ec4899','#14b8a6',
+  '#92400e','#1e3a5f',
+];
+const palEl = document.getElementById('palette');
+PRESETS.forEach(c => {
+  const d = document.createElement('div');
+  d.className = 'swatch' + (c === '#000000' ? ' on' : '');
+  d.style.background = c;
+  if (c === '#ffffff') d.style.boxShadow = 'inset 0 0 0 1px #c0bdb8';
+  d.onclick = () => { setColor(c); palEl.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on')); d.classList.add('on'); };
+  palEl.appendChild(d);
+});
+
+function setColor(c) {
+  color = c;
+  document.getElementById('cpick').value = c;
+  document.getElementById('stColor').textContent = c;
+  updateSzDot();
+}
+
+// ══════════════════════════════════════════════════════════
+//  TOOL CONTROLS
+// ══════════════════════════════════════════════════════════
+const TOOL_NAMES = {
+  pen:'Bút chì',brush:'Cọ mềm',eraser:'Tẩy',
+  fill:'Đổ màu',eye:'Hút màu',text:'Văn bản',
+  line:'Đường thẳng',rect:'Chữ nhật',circle:'Hình tròn'
+};
+
+function setTool(t) {
+  if (tool === 'text') commitText();
+  document.getElementById('eyedropOverlay').classList.remove('active');
+  document.getElementById('loupe').style.display = 'none';
+
+  tool = t;
+  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
+  document.getElementById('t-' + t)?.classList.add('on');
+
+  const cursors = {
+    eraser:'cell', eye:'crosshair', fill:'crosshair',
+    text:'text', pen:'crosshair', brush:'crosshair',
+    line:'crosshair', rect:'crosshair', circle:'crosshair'
+  };
+  area.style.cursor = cursors[t] || 'crosshair';
+  document.getElementById('stTool').textContent = TOOL_NAMES[t] || t;
+
+  if (t === 'eye') {
+    document.getElementById('eyedropOverlay').classList.add('active');
+  }
+}
+
+function setSize(v) {
+  size = v;
+  document.getElementById('stSize').textContent = v + 'px';
+  updateSzDot();
+}
+function setOpacity(v) {
+  opacity = v / 100;
+  document.getElementById('opVal').textContent = v + '%';
+}
+function updateSzDot() {
+  const d = document.getElementById('szDot');
+  const s = Math.max(3, Math.min(size, 28));
+  d.style.width  = s + 'px';
+  d.style.height = s + 'px';
+  d.style.background = color || '#fff';
+}
+
+// ══════════════════════════════════════════════════════════
+//  COORDINATE CONVERSION
+// ══════════════════════════════════════════════════════════
+function clientToCanvas(clientX, clientY) {
+  const r = ov.getBoundingClientRect();
+  return {
+    x: (clientX - r.left) * (CANVAS_W  / r.width),
+    y: (clientY - r.top)  * (CANVAS_H / r.height),
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+//  APPLY DRAW 
 // ══════════════════════════════════════════════════════════
 function h2rgba(hex, a) {
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
   return `rgba(${r},${g},${b},${a})`;
 }
 
-function applyDraw(d, customCtx) {
-  // Tự động phân phối nét vẽ vào đúng Page và Layer của hệ thống
-  ensurePageAndLayer(d.pageId, d.layerId);
-  
-  const targetCanvas = document.getElementById(`canvas_${d.pageId}_${d.layerId}`);
-  const c = customCtx || targetCanvas.getContext('2d');
-  
+function applyDraw(d, target) {
+  const c = target;
+  if (!c) return;
   c.save();
+  
   c.globalAlpha = d.tool === 'eraser' ? 1 : (d.opacity ?? 1);
   c.lineWidth   = d.size;
   c.lineCap     = 'round';
   c.lineJoin    = 'round';
-  
+  c.globalCompositeOperation = 'source-over';
+
   const col = (d.tool === 'eraser') ? '#ffffff' : (d.color || '#000');
   c.strokeStyle = col;
   c.fillStyle   = h2rgba(col, (d.opacity ?? 1) * 0.18);
 
   if (d.tool === 'brush') {
-    c.shadowColor = col; c.shadowBlur = d.size * 0.4;
+    c.shadowColor = col;
+    c.shadowBlur  = d.size * 0.4;
   }
 
   switch (d.type) {
     case 'dot':
-      c.beginPath(); c.arc(d.x0, d.y0, Math.max(0.5, d.size / 2), 0, Math.PI * 2);
-      c.fillStyle = col; c.fill();
+      c.beginPath();
+      c.arc(d.x0, d.y0, Math.max(0.5, d.size / 2), 0, Math.PI * 2);
+      c.fillStyle = col;
+      c.fill();
       break;
     case 'move':
     case 'line':
-      c.beginPath(); c.moveTo(d.x0, d.y0); c.lineTo(d.x1, d.y1); c.stroke();
+      c.beginPath();
+      c.moveTo(d.x0, d.y0);
+      c.lineTo(d.x1, d.y1);
+      c.stroke();
       break;
     case 'rect':
-      c.beginPath(); c.rect(d.x0, d.y0, d.x1 - d.x0, d.y1 - d.y0);
+      c.beginPath();
+      c.rect(d.x0, d.y0, d.x1 - d.x0, d.y1 - d.y0);
       if (d.fill) c.fill();
       c.stroke();
       break;
     case 'circle': {
-      const rx = Math.abs(d.x1 - d.x0) / 2, ry = Math.abs(d.y1 - d.y0) / 2;
-      c.beginPath(); c.ellipse(d.x0 + (d.x1 - d.x0) / 2, d.y0 + (d.y1 - d.y0) / 2, Math.max(0,rx), Math.max(0,ry), 0, 0, Math.PI * 2);
-      if (d.fill) c.fill(); c.stroke();
+      const rx  = Math.abs(d.x1 - d.x0) / 2;
+      const ry  = Math.abs(d.y1 - d.y0) / 2;
+      const cx2 = d.x0 + (d.x1 - d.x0) / 2;
+      const cy2 = d.y0 + (d.y1 - d.y0) / 2;
+      c.beginPath();
+      c.ellipse(cx2, cy2, Math.max(0,rx), Math.max(0,ry), 0, 0, Math.PI * 2);
+      if (d.fill) c.fill();
+      c.stroke();
       break;
     }
     case 'fill':
-      floodFill(c, Math.round(d.x0), Math.round(d.y0), col, d.opacity ?? 1, targetCanvas.width, targetCanvas.height);
+      floodFill(c, Math.round(d.x0), Math.round(d.y0), col, d.opacity ?? 1);
       break;
     case 'text':
-      c.fillStyle = col; c.font = `${d.size * 4}px sans-serif`;
-      c.textBaseline = 'top'; c.fillText(d.text, d.x0, d.y0);
+      c.fillStyle    = col;
+      c.font         = `${d.size * 4}px sans-serif`;
+      c.textBaseline = 'top'; 
+      c.fillText(d.text, d.x0, d.y0);
       break;
   }
   c.restore();
 }
 
-function floodFill(c, startX, startY, fillColorHex, alpha, W, H) {
-  const imgData = c.getImageData(0, 0, W, H);
-  const data = imgData.data;
+// ══════════════════════════════════════════════════════════
+//  FLOOD FILL 
+// ══════════════════════════════════════════════════════════
+function floodFill(c, startX, startY, fillColorHex, alpha) {
+  const imgData = c.getImageData(0, 0, CANVAS_W, CANVAS_H);
+  const data    = imgData.data;
+  const W       = imgData.width;
+  const H       = imgData.height;
+
   if (startX < 0 || startY < 0 || startX >= W || startY >= H) return;
 
   const idx = (startY * W + startX) * 4;
-  const sr = data[idx], sg = data[idx+1], sb = data[idx+2], sa = data[idx+3];
-  const fr = parseInt(fillColorHex.slice(1,3),16), fg = parseInt(fillColorHex.slice(3,5),16), fb = parseInt(fillColorHex.slice(5,7),16), fa = Math.round(alpha * 255);
+  const sr  = data[idx], sg = data[idx+1], sb = data[idx+2], sa = data[idx+3];
+
+  const fr = parseInt(fillColorHex.slice(1,3),16);
+  const fg = parseInt(fillColorHex.slice(3,5),16);
+  const fb = parseInt(fillColorHex.slice(5,7),16);
+  const fa = Math.round(alpha * 255);
 
   if (sr===fr && sg===fg && sb===fb && sa===fa) return;
+
   const TOLERANCE = 30;
+  function matchSeed(i) {
+    return Math.abs(data[i]-sr)<=TOLERANCE &&
+           Math.abs(data[i+1]-sg)<=TOLERANCE &&
+           Math.abs(data[i+2]-sb)<=TOLERANCE &&
+           Math.abs(data[i+3]-sa)<=TOLERANCE;
+  }
+  function setPixel(i) {
+    data[i]=fr; data[i+1]=fg; data[i+2]=fb; data[i+3]=fa;
+  }
 
   const stack = [startX + startY * W];
   const visited = new Uint8Array(W * H);
   visited[startX + startY * W] = 1;
+  setPixel(idx);
 
   while (stack.length) {
-    const pos = stack.pop(), px = pos % W, py = (pos / W) | 0;
-    const curIdx = pos * 4;
-    data[curIdx]=fr; data[curIdx+1]=fg; data[curIdx+2]=fb; data[curIdx+3]=fa;
+    const pos  = stack.pop();
+    const px   = pos % W;
+    const py   = (pos / W) | 0;
 
-    const neighbors = [px > 0 && pos - 1, px < W - 1 && pos + 1, py > 0 && pos - W, py < H - 1 && pos + W];
+    const neighbors = [
+      px > 0     && pos - 1,
+      px < W - 1 && pos + 1,
+      py > 0     && pos - W,
+      py < H - 1 && pos + W,
+    ];
     for (const n of neighbors) {
       if (n !== false && !visited[n]) {
         const nIdx = n * 4;
-        if (Math.abs(data[nIdx]-sr)<=TOLERANCE && Math.abs(data[nIdx+1]-sg)<=TOLERANCE && Math.abs(data[nIdx+2]-sb)<=TOLERANCE) {
-          visited[n] = 1; stack.push(n);
+        if (matchSeed(nIdx)) {
+          visited[n] = 1;
+          setPixel(nIdx);
+          stack.push(n);
         }
       }
     }
@@ -678,27 +938,15 @@ function floodFill(c, startX, startY, fillColorHex, alpha, W, H) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  Xử lý Gộp tầng mẫu phục vụ Kính lúp & Hút màu (Eyedropper)
+//  EYEDROPPER
 // ══════════════════════════════════════════════════════════
-const eyeOverlay = document.getElementById('eyedropOverlay');
-const loupeEl = document.getElementById('loupe');
+const eyeOverlay  = document.getElementById('eyedropOverlay');
+const loupeEl     = document.getElementById('loupe');
 const loupeCanvas = document.getElementById('loupeCanvas');
-const loupeCtx = loupeCanvas.getContext('2d');
-const loupeColor = document.getElementById('loupeColor');
-
-function getFlattenedComposite() {
-  const tempCv = document.createElement('canvas');
-  tempCv.width = CANVAS_W; tempCv.height = CANVAS_H;
-  const tempCtx = tempCv.getContext('2d');
-  
-  const page = pages.find(p => p.id === activePageId);
-  if (page) {
-    page.layers.forEach(l => {
-      if (l.visible) tempCtx.drawImage(l.canvas, 0, 0);
-    });
-  }
-  return { canvas: tempCv, ctx: tempCtx };
-}
+const loupeCtx    = loupeCanvas.getContext('2d');
+const loupeColor  = document.getElementById('loupeColor');
+const LOUPE_ZOOM  = 8;
+const LOUPE_SIZE  = 80;
 
 eyeOverlay.addEventListener('mousemove', e => {
   const p = clientToCanvas(e.clientX, e.clientY);
@@ -707,62 +955,88 @@ eyeOverlay.addEventListener('mousemove', e => {
 eyeOverlay.addEventListener('mouseleave', () => { loupeEl.style.display = 'none'; });
 eyeOverlay.addEventListener('click', e => {
   const p = clientToCanvas(e.clientX, e.clientY);
-  const comp = getFlattenedComposite();
-  const px = Math.round(p.x), py = Math.round(p.y);
-  if (px >= 0 && py >= 0 && px < CANVAS_W && py < CANVAS_H) {
-    const d = comp.ctx.getImageData(px, py, 1, 1).data;
-    const hex = '#' + [d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join('');
-    setColor(hex);
-  }
-  setTool('pen');
+  pickColorAt(p.x, p.y);
+  setTool('pen'); 
 });
 
 function updateLoupe(cx, cy, screenX, screenY) {
+  const cl = getCurrentLayer();
+  if (!cl) return;
+
   loupeEl.style.display = 'block';
   let lx = screenX + 20, ly = screenY - 50;
-  if (lx + 90 > window.innerWidth) lx = screenX - 100;
+  if (lx + 90 > window.innerWidth)  lx = screenX - 100;
   if (ly < 0) ly = screenY + 20;
-  loupeEl.style.left = lx + 'px'; loupeEl.style.top = ly + 'px';
+  loupeEl.style.left = lx + 'px';
+  loupeEl.style.top  = ly + 'px';
 
-  const comp = getFlattenedComposite();
+  const half = (LOUPE_SIZE / LOUPE_ZOOM) / 2;
   loupeCtx.imageSmoothingEnabled = false;
-  loupeCtx.clearRect(0, 0, 80, 80);
-  loupeCtx.drawImage(comp.canvas, cx - 5, cy - 5, 10, 10, 0, 0, 80, 80);
+  loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
+  loupeCtx.drawImage(cl.canvas, cx - half, cy - half, LOUPE_SIZE / LOUPE_ZOOM, LOUPE_SIZE / LOUPE_ZOOM, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
+
+  loupeCtx.strokeStyle = 'rgba(0,0,0,0.5)';
+  loupeCtx.lineWidth = 1;
+  loupeCtx.beginPath();
+  loupeCtx.moveTo(LOUPE_SIZE/2, 0); loupeCtx.lineTo(LOUPE_SIZE/2, LOUPE_SIZE);
+  loupeCtx.moveTo(0, LOUPE_SIZE/2); loupeCtx.lineTo(LOUPE_SIZE, LOUPE_SIZE/2);
+  loupeCtx.stroke();
 
   const px = Math.round(cx), py = Math.round(cy);
   if (px >= 0 && py >= 0 && px < CANVAS_W && py < CANVAS_H) {
-    const d = comp.ctx.getImageData(px, py, 1, 1).data;
+    const d = cl.ctx.getImageData(px, py, 1, 1).data;
     const hex = '#' + [d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join('');
-    loupeColor.style.background = hex; loupeColor.textContent = hex.toUpperCase();
+    loupeColor.style.background = hex;
+    loupeColor.textContent      = hex.toUpperCase();
   }
 }
 
+function pickColorAt(cx, cy) {
+  const px = Math.round(cx), py = Math.round(cy);
+  if (px < 0 || py < 0 || px >= CANVAS_W || py >= CANVAS_H) return;
+  const cl = getCurrentLayer();
+  if (!cl) return;
+  const d   = cl.ctx.getImageData(px, py, 1, 1).data;
+  const hex = '#' + [d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join('');
+  setColor(hex);
+  palEl.querySelectorAll('.swatch').forEach(s => s.classList.remove('on'));
+}
+
 // ══════════════════════════════════════════════════════════
-//  Giao diện Nhập Văn Bản & Điều phối Sự Kiện Chuột
+//  TEXT TOOL 
 // ══════════════════════════════════════════════════════════
 const textInput = document.getElementById('textInput');
 let textX = 0, textY = 0;
 
-function startText(canvasX, canvasY) {
+function startText(canvasX, canvasY, screenX, screenY) {
   textX = canvasX; textY = canvasY;
-  textInput.style.display = 'block';
-  textInput.style.left = canvasX + 'px';
-  textInput.style.top = canvasY + 'px';
-  textInput.style.fontSize = (size * 4) + 'px';
-  textInput.style.color = color;
-  textInput.value = ''; textInput.focus();
+  textInput.style.display  = 'block';
+  textInput.style.left     = canvasX + 'px';
+  textInput.style.top      = canvasY + 'px';
+  textInput.style.fontSize = (size * 4) + 'px'; 
+  textInput.style.color    = color;
+  textInput.value = '';
+  textInput.focus();
 }
 
 function commitText() {
   const txt = textInput.value.trim();
-  if (txt && activePageId && activeLayerId) {
+  const cl = getCurrentLayer();
+  if (txt && cl) {
     pushUndo();
-    const d = mkData('text', textX, textY, textX, textY);
-    d.text = txt;
-    applyDraw(d);
+    const d = {
+      type:'text', tool:'text',
+      color, size, opacity, fill: false,
+      x0: textX, y0: textY,
+      text: txt,
+      pageId: currentPageId,
+      layerId: cl.id
+    };
+    applyDraw(d, cl.ctx);
     socket.emit('draw', d);
   }
-  textInput.style.display = 'none'; textInput.value = '';
+  textInput.style.display = 'none';
+  textInput.value = '';
 }
 
 textInput.addEventListener('keydown', e => {
@@ -770,58 +1044,198 @@ textInput.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitText(); }
   e.stopPropagation();
 });
-textInput.addEventListener('blur', commitText);
+textInput.addEventListener('blur', () => { commitText(); });
 
-function clientToCanvas(clientX, clientY) {
-  const r = ov.getBoundingClientRect();
-  return { x: (clientX - r.left) * (CANVAS_W / r.width), y: (clientY - r.top) * (CANVAS_H / r.height) };
+// ══════════════════════════════════════════════════════════
+//  TOUCH HANDLER 
+// ══════════════════════════════════════════════════════════
+let touchMode = null;
+let pinchStartDist = 0, pinchStartScale = 1;
+let panStartVpX = 0, panStartVpY = 0;
+let panStartMidX = 0, panStartMidY = 0;
+let panHintTimer = null;
+
+function getTouchMid(t) { return { x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2 }; }
+function getTouchDist(t) { const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY; return Math.sqrt(dx*dx+dy*dy); }
+
+function showPanHint() {
+  document.getElementById('panHint').classList.add('show');
+  clearTimeout(panHintTimer);
+  panHintTimer = setTimeout(()=>document.getElementById('panHint').classList.remove('show'), 1500);
 }
 
-// Gắn toàn bộ Listener tương tác lên lớp phủ `ov` cố định
-ov.addEventListener('mousedown', e => {
-  if (e.button === 0) {
+area.addEventListener('contextmenu', e => e.preventDefault());
+
+area.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches;
+  if (t.length === 1 && touchMode === null) {
+    touchMode = 'draw';
+    const p = clientToCanvas(t[0].clientX, t[0].clientY);
+    handleDrawStart(p.x, p.y, t[0].clientX, t[0].clientY);
+  } else if (t.length === 2) {
+    if (touchMode === 'draw' && drawing) cancelDraw();
+    touchMode = 'pan';
+    pinchStartDist  = getTouchDist(t);
+    pinchStartScale = vpScale;
+    const mid = getTouchMid(t);
+    panStartMidX = mid.x; panStartMidY = mid.y;
+    panStartVpX  = vpX;   panStartVpY  = vpY;
+    showPanHint();
+  }
+}, { passive: false });
+
+area.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const t = e.touches;
+  if (touchMode === 'draw' && t.length === 1) {
+    const p = clientToCanvas(t[0].clientX, t[0].clientY);
+    emitCursor(p.x, p.y); 
+    handleDrawMove(p.x, p.y);
+  } else if (touchMode === 'pan' && t.length === 2) {
+    const mid  = getTouchMid(t);
+    const dist = getTouchDist(t);
+    let newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (dist / pinchStartDist)));
+    const aRect  = area.getBoundingClientRect();
+    const midRelX = panStartMidX - aRect.left;
+    const midRelY = panStartMidY - aRect.top;
+    const sf = newScale / pinchStartScale;
+    vpX = midRelX - (midRelX - panStartVpX) * sf + (mid.x - panStartMidX);
+    vpY = midRelY - (midRelY - panStartVpY) * sf + (mid.y - panStartMidY);
+    vpScale = newScale;
+    clampViewport();
+    applyViewport();
+    flashZoom();
+  }
+}, { passive: false });
+
+area.addEventListener('touchend', e => {
+  e.preventDefault();
+  const remaining = e.touches.length;
+  if (touchMode === 'draw' && remaining === 0) {
+    const ct = e.changedTouches[0];
+    const p  = clientToCanvas(ct.clientX, ct.clientY);
+    handleDrawEnd(p.x, p.y);
+    touchMode = null;
+  } else if (touchMode === 'pan' && remaining <= 1) {
+    touchMode = null;
+    document.getElementById('panHint').classList.remove('show');
+  }
+}, { passive: false });
+
+// ══════════════════════════════════════════════════════════
+//  MOUSE EVENTS
+// ══════════════════════════════════════════════════════════
+area.addEventListener('wheel', e => {
+  e.preventDefault();
+  const step = e.deltaY < 0 ? 1.15 : (1/1.15);
+  const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale * step));
+  const ar = area.getBoundingClientRect();
+  const mx = e.clientX - ar.left;
+  const my = e.clientY - ar.top;
+  vpX = mx - (mx - vpX) * (newScale / vpScale);
+  vpY = my - (my - vpY) * (newScale / vpScale);
+  vpScale = newScale;
+  clampViewport();
+  applyViewport();
+  flashZoom();
+}, { passive: false });
+
+let isPanning = false;
+let panLastX = 0, panLastY = 0;
+
+area.addEventListener('mousedown', e => {
+  if (e.button === 2) {           
+    isPanning = true;
+    panLastX  = e.clientX;
+    panLastY  = e.clientY;
+    area.style.cursor = 'grabbing';
+    e.preventDefault();
+  } else if (e.button === 0) {  
     const p = clientToCanvas(e.clientX, e.clientY);
-    handleDrawStart(p.x, p.y);
+    handleDrawStart(p.x, p.y, e.clientX, e.clientY);
   }
 });
 
 window.addEventListener('mousemove', e => {
-  const p = clientToCanvas(e.clientX, e.clientY);
-  document.getElementById('stPos').textContent = `${Math.round(p.x)}, ${Math.round(p.y)}`;
-  if (drawing) {
-    emitCursor(p.x, p.y); handleDrawMove(p.x, p.y);
+  if (isPanning) {
+    const dx = e.clientX - panLastX;
+    const dy = e.clientY - panLastY;
+    panLastX  = e.clientX;
+    panLastY  = e.clientY;
+    vpX += dx;
+    vpY += dy;
+    clampViewport();
+    applyViewport();
+    return;
   }
+  const p = clientToCanvas(e.clientX, e.clientY);
+  if (p.x >= 0 && p.x <= CANVAS_W && p.y >= 0 && p.y <= CANVAS_H) {
+    document.getElementById('stPos').textContent = `${Math.round(p.x)}, ${Math.round(p.y)}`;
+    emitCursor(p.x, p.y);
+  }
+  if (drawing) handleDrawMove(p.x, p.y);
 });
 
 window.addEventListener('mouseup', e => {
+  if (e.button === 2 && isPanning) {
+    isPanning = false;
+    area.style.cursor = '';
+    return;
+  }
   if (e.button === 0 && drawing) {
     const p = clientToCanvas(e.clientX, e.clientY);
     handleDrawEnd(p.x, p.y);
   }
 });
 
-function handleDrawStart(x, y) {
-  if (tool === 'text') { commitText(); startText(x, y); return; }
+// ══════════════════════════════════════════════════════════
+//  DRAW LOGIC
+// ══════════════════════════════════════════════════════════
+function handleDrawStart(x, y, screenX, screenY) {
+  const cl = getCurrentLayer();
+  if (!cl || !cl.visible) return; // Không vẽ được nếu lớp đang ẩn
+
+  if (tool === 'text') {
+    commitText();
+    startText(x, y, screenX || x, screenY || y);
+    return;
+  }
   if (tool === 'fill') {
-    pushUndo(); const d = mkData('fill', x, y, x, y); applyDraw(d); socket.emit('draw', d); return;
+    pushUndo();
+    const d = mkData('fill', x, y, x, y);
+    applyDraw(d, cl.ctx);
+    socket.emit('draw', d);
+    return;
   }
   if (tool === 'eye') return;
 
-  pushUndo(); drawing = true; sx = lx = x; sy = ly = y;
-  if (tool === 'line' || tool === 'rect' || tool === 'circle') return;
+  pushUndo(); 
+  drawing = true;
+  sx = lx = x;
+  sy = ly = y;
 
+  if (isShape(tool)) {
+    snap = cl.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+    return;
+  }
   const d = mkData('dot', sx, sy, sx, sy);
-  applyDraw(d); socket.emit('draw', d);
+  applyDraw(d, cl.ctx);
+  socket.emit('draw', d);
 }
 
 function handleDrawMove(x, y) {
   if (!drawing) return;
-  if (tool === 'line' || tool === 'rect' || tool === 'circle') {
-    octx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-    applyDraw(mkData(tool, sx, sy, x, y), octx); // Vẽ xem trước lên `ov`
+  const cl = getCurrentLayer();
+  if (!cl) return;
+
+  if (isShape(tool)) {
+    octx.clearRect(0, 0, ov.width, ov.height);
+    applyDraw(mkData(tool, sx, sy, x, y), octx);
   } else {
     const d = mkData('move', lx, ly, x, y);
-    applyDraw(d); socket.emit('draw', d);
+    applyDraw(d, cl.ctx);
+    socket.emit('draw', d);
     lx = x; ly = y;
   }
 }
@@ -829,178 +1243,76 @@ function handleDrawMove(x, y) {
 function handleDrawEnd(x, y) {
   if (!drawing) return;
   drawing = false;
-  octx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-  if (tool === 'line' || tool === 'rect' || tool === 'circle') {
+  const cl = getCurrentLayer();
+  if (!cl) return;
+
+  if (isShape(tool)) {
+    octx.clearRect(0, 0, ov.width, ov.height);
+    if (snap) { cl.ctx.putImageData(snap, 0, 0); snap = null; }
     const d = mkData(tool, sx, sy, x, y);
-    applyDraw(d); socket.emit('draw', d);
+    applyDraw(d, cl.ctx);
+    socket.emit('draw', d);
   }
 }
 
+function cancelDraw() {
+  if (!drawing) return;
+  drawing = false;
+  const cl = getCurrentLayer();
+  if (!cl) return;
+  if (undoStack.length) { cl.ctx.putImageData(undoStack.pop(), 0, 0); updateUndoButtons(); }
+  if (snap) { snap = null; }
+  octx.clearRect(0, 0, ov.width, ov.height);
+}
+
+function isShape(t) { return t === 'line' || t === 'rect' || t === 'circle'; }
+
 function mkData(type, x0, y0, x1, y1) {
+  const isBrush = (tool === 'brush');
+  const cl = getCurrentLayer();
   return {
-    type, tool, pageId: activePageId, layerId: activeLayerId,
-    color: (tool === 'eraser') ? '#ffffff' : color,
-    size: tool === 'eraser' ? size * 2.5 : size,
-    opacity, fill: document.getElementById('fillChk').checked,
-    x0, y0, x1, y1
+    type, tool,
+    color:   (tool === 'eraser') ? '#ffffff' : color,
+    size:    tool === 'eraser' ? size * 2.5 : isBrush ? size * 2.5 : size,
+    opacity: opacity,
+    brushFeel: isBrush ? 0.65 : 1,
+    fill:    document.getElementById('fillChk').checked,
+    x0, y0, x1, y1,
+    pageId: currentPageId,
+    layerId: cl ? cl.id : null
   };
 }
 
 // ══════════════════════════════════════════════════════════
-//  KÉO NỀN (PAN) & THU PHÓNG BẰNG CHUỘT / TOUCH TRÊN ĐT
+//  CLEAR
 // ══════════════════════════════════════════════════════════
-let touchMode = null, pinchStartDist = 0, pinchStartScale = 1;
-let panStartVpX = 0, panStartVpY = 0, panStartMidX = 0, panStartMidY = 0;
+function clearCanvas(pageId) {
+  const targetPage = pageId ? pages.find(p => p.id === pageId) : getCurrentPage();
+  if (!targetPage) return;
 
-area.addEventListener('touchstart', e => {
-  const t = e.touches;
-  if (t.length === 1 && touchMode === null) {
-    touchMode = 'draw';
-    const p = clientToCanvas(t[0].clientX, t[0].clientY);
-    handleDrawStart(p.x, p.y);
-  } else if (t.length === 2) {
-    touchMode = 'pan'; drawing = false;
-    const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
-    pinchStartDist = Math.sqrt(dx*dx + dy*dy); pinchStartScale = vpScale;
-    panStartMidX = (t[0].clientX + t[1].clientX)/2; panStartMidY = (t[0].clientY + t[1].clientY)/2;
-    panStartVpX = vpX; panStartVpY = vpY;
-  }
-}, {passive:false});
-
-area.addEventListener('touchmove', e => {
-  e.preventDefault();
-  const t = e.touches;
-  if (touchMode === 'draw' && t.length === 1) {
-    const p = clientToCanvas(t[0].clientX, t[0].clientY);
-    emitCursor(p.x, p.y); handleDrawMove(p.x, p.y);
-  } else if (touchMode === 'pan' && t.length === 2) {
-    const mx = (t[0].clientX + t[1].clientX)/2, my = (t[0].clientY + t[1].clientY)/2;
-    const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    let newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (dist / pinchStartDist)));
-    const r = area.getBoundingClientRect();
-    const rx = panStartMidX - r.left, ry = panStartMidY - r.top;
-    vpX = rx - (rx - panStartVpX) * (newScale / pinchStartScale) + (mx - panStartMidX);
-    vpY = ry - (ry - panStartVpY) * (newScale / pinchStartScale) + (my - panStartMidY);
-    vpScale = newScale; clampViewport(); applyViewport();
-  }
-}, {passive:false});
-
-area.addEventListener('touchend', e => {
-  if (touchMode === 'draw' && e.touches.length === 0) {
-    const p = clientToCanvas(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-    handleDrawEnd(p.x, p.y); touchMode = null;
-  } else if (touchMode === 'pan' && e.touches.length <= 1) { touchMode = null; }
-});
-
-area.addEventListener('wheel', e => {
-  e.preventDefault();
-  const step = e.deltaY < 0 ? 1.15 : (1/1.15);
-  const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale * step));
-  const r = area.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
-  vpX = mx - (mx - vpX) * (newScale / vpScale); vpY = my - (my - vpY) * (newScale / vpScale);
-  vpScale = newScale; clampViewport(); applyViewport(); flashZoom();
-}, {passive:false});
-
-let isPanning = false, panLastX = 0, panLastY = 0;
-area.addEventListener('mousedown', e => {
-  if (e.button === 2) { // Click chuột phải để kéo bảng vẽ (Pan)
-    isPanning = true; panLastX = e.clientX; panLastY = e.clientY;
-    area.style.cursor = 'grabbing'; e.preventDefault();
-  }
-});
-window.addEventListener('mousemove', e => {
-  if (isPanning) {
-    vpX += e.clientX - panLastX; vpY += e.clientY - panLastY;
-    panLastX = e.clientX; panLastY = e.clientY;
-    clampViewport(); applyViewport();
-  }
-});
-window.addEventListener('mouseup', e => { if (e.button === 2 && isPanning) { isPanning = false; area.style.cursor = ''; } });
-area.addEventListener('contextmenu', e => e.preventDefault());
-
-// ══════════════════════════════════════════════════════════
-//  ĐỒNG BỘ CON TRỎ & SOCKET
-// ══════════════════════════════════════════════════════════
-const rcMap = {};
-function makeCursor(id, label, col) {
-  const el = document.createElement('div'); el.className = 'rcursor';
-  el.innerHTML = `<svg width="14" height="18" viewBox="0 0 14 18"><path d="M0 0L0 14L3.5 10L6 17L8 16L5.5 9L10 9Z" fill="${col}" stroke="white" stroke-width="1"/></svg><div class="rcursor-label" style="background:${col}">${label}</div>`;
-  wrap.appendChild(el); rcMap[id] = el; return el;
-}
-
-let lastCursorEmit = 0;
-function emitCursor(x, y) {
-  const now = Date.now(); if (now - lastCursorEmit < 30) return;
-  lastCursorEmit = now; socket.emit('cursor', { x, y });
-}
-
-socket.on('cursor', ({ id, userId, color: c, x, y }) => {
-  if (id === myId) return;
-  let el = rcMap[id];
-  if (!el) el = makeCursor(id, userId || id.slice(0,4), c || '#666');
-  el.style.left = x + 'px'; el.style.top = y + 'px';
-});
-
-socket.on('removeCursor', id => { if (rcMap[id]) { rcMap[id].remove(); delete rcMap[id]; } });
-
-socket.on('init', ({ history, me, users }) => {
-  myId = socket.id; myColor = me.color;
-  const mt = document.getElementById('meTag');
-  mt.textContent = `Bạn: ${me.id}`; mt.style.borderLeft = `3px solid ${me.color}`;
+  targetPage.layers.forEach((l, idx) => {
+    l.ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    if (idx === 0) {
+      l.ctx.fillStyle = '#ffffff';
+      l.ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    }
+  });
   
-  initCanvasSystem();
-  history.forEach(d => applyDraw(d));
-  updateUserBadges(users);
-});
+  octx.clearRect(0, 0, ov.width, ov.height);
+  snap = null; drawing = false;
+  undoStack = []; redoStack = [];
+  updateUndoButtons();
+}
 
-socket.on('draw', d => applyDraw(d));
-
-socket.on('structure_change', d => {
-  if (d.type === 'add_page') ensurePageAndLayer(d.pageId, 'layer_bg');
-  if (d.type === 'add_layer') ensurePageAndLayer(d.pageId, d.layerId, d.name);
-});
-
-socket.on('userList', users => {
-  document.getElementById('countTxt').textContent = users.length + ' người';
-  updateUserBadges(users);
-  const currentIds = users.map(u => u.socketId || u.id);
-  for (const id in rcMap) {
-    if (!currentIds.includes(id) && id !== myId) { rcMap[id].remove(); delete rcMap[id]; }
-  }
-});
-
-function updateUserBadges(users) {
-  const el = document.getElementById('userBadges');
-  el.innerHTML = users.slice(0, 5).map(u => `<div class="ubadge" style="background:${u.color}" title="${u.id}">${u.id.slice(0,2)}</div>`).join('') + (users.length > 5 ? `<div class="ubadge" style="background:#aaa">+${users.length-5}</div>` : '');
+function doClear() {
+  if (!confirm('Xóa toàn bộ các lớp của trang vẽ này? Mọi người đều sẽ thấy.')) return;
+  clearCanvas(currentPageId);
+  socket.emit('clear', { pageId: currentPageId });
 }
 
 // ══════════════════════════════════════════════════════════
-//  BỘ PHÍM TẮT & ĐIỀU KHIỂN ĐỒ HOẠ CƠ BẢN
+//  KEYBOARD SHORTCUTS
 // ══════════════════════════════════════════════════════════
-const PRESETS = ['#000000','#ffffff','#6b7280','#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6'];
-const palEl = document.getElementById('palette');
-PRESETS.forEach(c => {
-  const d = document.createElement('div'); d.className = 'swatch' + (c === '#000000' ? ' on' : ''); d.style.background = c;
-  if (c === '#ffffff') d.style.boxShadow = 'inset 0 0 0 1px #c0bdb8';
-  d.onclick = () => { setColor(c); palEl.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on')); d.classList.add('on'); };
-  palEl.appendChild(d);
-});
-
-function setColor(c) { color = c; document.getElementById('cpick').value = c; document.getElementById('stColor').textContent = c; updateSzDot(); }
-function setSize(v) { size = v; document.getElementById('stSize').textContent = v + 'px'; updateSzDot(); }
-function updateSzDot() { const d = document.getElementById('szDot'), s = Math.max(3, Math.min(size, 24)); d.style.width = s+'px'; d.style.height = s+'px'; d.style.background = color; }
-
-function setTool(t) {
-  if (tool === 'text') commitText();
-  eyeOverlay.classList.remove('active'); loupeEl.style.display = 'none';
-  tool = t; document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
-  document.getElementById('t-' + t)?.classList.add('on');
-  document.getElementById('stTool').textContent = t;
-  if (t === 'eye') eyeOverlay.classList.add('active');
-}
-
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (e.ctrlKey || e.metaKey) {
@@ -1008,15 +1320,149 @@ document.addEventListener('keydown', e => {
     if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); doRedo(); return; }
     return;
   }
-  const m = { p:'pen', b:'brush', e:'eraser', f:'fill', i:'eye', t:'text', l:'line', r:'rect', c:'circle' };
+  const m = { p:'pen',b:'brush',e:'eraser',f:'fill',i:'eye',t:'text',l:'line',r:'rect',c:'circle' };
   if (m[e.key.toLowerCase()]) setTool(m[e.key.toLowerCase()]);
   if (e.key === '0') fitViewportToArea();
+  if (e.key === '=' || e.key === '+') doZoom(+1);
+  if (e.key === '-') doZoom(-1);
+  if (e.key === '[') setSize(Math.max(1, size - 2));
+  if (e.key === ']') setSize(Math.min(80, size + 2));
+  document.getElementById('szSlider').value = size;
 });
 
-window.addEventListener('load', () => {
-  initCanvasSystem();
-  setColor('#000000');
+// ══════════════════════════════════════════════════════════
+//  REMOTE CURSORS
+// ══════════════════════════════════════════════════════════
+const rcMap = {};
+
+function makeCursor(id, label, col) {
+  const el = document.createElement('div');
+  el.className = 'rcursor';
+  el.innerHTML = `<svg width="14" height="18" viewBox="0 0 14 18"
+    style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))">
+    <path d="M0 0L0 14L3.5 10L6 17L8 16L5.5 9L10 9Z"
+      fill="${col}" stroke="white" stroke-width="1" stroke-linejoin="round"/>
+  </svg><div class="rcursor-label" style="background:${col}">${label}</div>`;
+  wrap.appendChild(el);
+  rcMap[id] = el;
+  return el;
+}
+
+let lastCursorEmit = 0;
+function emitCursor(x, y) {
+  const now = Date.now();
+  if (now - lastCursorEmit < 30) return;
+  lastCursorEmit = now;
+  socket.emit('cursor', { x, y });
+}
+
+socket.on('cursor', ({ id, userId, color: c, x, y }) => {
+  if (id === myId) return;
+  let el = rcMap[id];
+  if (!el) el = makeCursor(id, userId || id.slice(0,4), c || '#666');
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
 });
+
+socket.on('removeCursor', id => {
+  if (rcMap[id]) { rcMap[id].remove(); delete rcMap[id]; }
+});
+
+// ══════════════════════════════════════════════════════════
+//  SOCKET EVENTS
+// ══════════════════════════════════════════════════════════
+socket.on('init', ({ history, me, users }) => {
+  myId    = socket.id;
+  myColor = me.color;
+  const mt = document.getElementById('meTag');
+  mt.textContent   = `Bạn: ${me.id}`;
+  mt.style.borderLeft  = `3px solid ${me.color}`;
+  mt.style.paddingLeft = '7px';
+
+  // Khởi động lại toàn bộ kết cấu cấu trúc
+  pages.forEach(p => p.layers.forEach(l => l.canvas.remove()));
+  pages = [];
+  currentPageId = null;
+  createPageStructure('default_page', 'Trang 1');
+
+  // Đọc và vẽ lại lịch sử phòng đồng bộ cấu trúc trang/lớp vẽ
+  if (history && history.length) {
+    history.forEach(d => {
+      if (d.type === 'action-add-page') {
+        if (!pages.some(p => p.id === d.pageId)) createPageStructure(d.pageId, d.name);
+      } else if (d.type === 'action-delete-page') {
+        deletePage(d.pageId, true);
+      } else if (d.type === 'action-add-layer') {
+        const targetPage = pages.find(p => p.id === d.pageId);
+        if (targetPage && !targetPage.layers.some(l => l.id === d.layerId)) {
+          createLayerStructure(d.pageId, d.layerId, d.name);
+        }
+      } else {
+        let tCtx = null;
+        if (d.pageId && d.layerId) {
+          let page = pages.find(p => p.id === d.pageId);
+          if (!page) page = createPageStructure(d.pageId, 'Trang đồng bộ');
+          let layer = page.layers.find(l => l.id === d.layerId);
+          if (!layer) layer = createLayerStructure(d.pageId, d.layerId, 'Lớp đồng bộ');
+          tCtx = layer.ctx;
+        } else {
+          if (pages.length > 0 && pages[0].layers.length > 0) tCtx = pages[0].layers[0].ctx;
+        }
+        if (tCtx) applyDraw(d, tCtx);
+      }
+    });
+  }
+
+  if (pages.length > 0) switchPage(pages[0].id);
+  updateUserBadges(users);
+});
+
+socket.on('draw', d => {
+  if (d.type === 'action-add-page') {
+    if (!pages.some(p => p.id === d.pageId)) createPageStructure(d.pageId, d.name);
+    return;
+  }
+  if (d.type === 'action-delete-page') {
+    deletePage(d.pageId, true);
+    return;
+  }
+  if (d.type === 'action-add-layer') {
+    const targetPage = pages.find(p => p.id === d.pageId);
+    if (targetPage && !targetPage.layers.some(l => l.id === d.layerId)) {
+      createLayerStructure(d.pageId, d.layerId, d.name);
+    }
+    return;
+  }
+
+  let tCtx = null;
+  if (d.pageId && d.layerId) {
+    let page = pages.find(p => p.id === d.pageId);
+    if (!page) page = createPageStructure(d.pageId, 'Trang vẽ động');
+    let layer = page.layers.find(l => l.id === d.layerId);
+    if (!layer) layer = createLayerStructure(d.pageId, d.layerId, 'Lớp vẽ động');
+    tCtx = layer.ctx;
+  } else {
+    const cl = getCurrentLayer();
+    if (cl) tCtx = cl.ctx;
+  }
+  
+  if (tCtx) applyDraw(d, tCtx);
+});
+
+socket.on('clear', data => clearCanvas(data?.pageId));
+
+socket.on('userList', users => {
+  document.getElementById('countTxt').textContent = users.length + ' người';
+  updateUserBadges(users);
+});
+
+function updateUserBadges(users) {
+  const el = document.getElementById('userBadges');
+  el.innerHTML = users.slice(0, 8).map(u =>
+    `<div class="ubadge" style="background:${u.color}" title="${u.id}">${u.id.slice(0,2).toUpperCase()}</div>`
+  ).join('') + (users.length > 8
+    ? `<div class="ubadge" style="background:#aaa">+${users.length-8}</div>` : '');
+}
 </script>
 </body>
 </html>
