@@ -216,7 +216,6 @@ input[type=color]{
 </head>
 <body>
 
-<!-- Header -->
 <div id="header">
   <h1>🎨 Bảng Vẽ Cộng Đồng</h1>
   <div class="live-badge"><div class="live-dot"></div><span id="countTxt">0 người</span></div>
@@ -224,16 +223,13 @@ input[type=color]{
   <div class="me-tag" id="meTag">Bạn: —</div>
 </div>
 
-<!-- Toolbar -->
 <div id="toolbar">
 
-  <!-- Undo / Redo -->
   <div class="tg">
     <button class="btn-undo" id="btnUndo" title="Hoàn tác [Ctrl+Z]" onclick="doUndo()">↩</button>
     <button class="btn-redo" id="btnRedo" title="Làm lại [Ctrl+Y]"  onclick="doRedo()">↪</button>
   </div>
 
-  <!-- Công cụ vẽ -->
   <div class="tg">
     <button class="tbtn on" id="t-pen"    data-key="P" title="Bút chì [P]"      onclick="setTool('pen')">
       <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
@@ -265,13 +261,11 @@ input[type=color]{
     </button>
   </div>
 
-  <!-- Màu -->
   <div class="tg" style="gap:4px">
     <input type="color" id="cpick" value="#000000" title="Chọn màu" oninput="setColor(this.value)">
     <div style="display:flex;flex-wrap:wrap;gap:3px;max-width:126px" id="palette"></div>
   </div>
 
-  <!-- Cỡ -->
   <div class="tg" style="gap:5px">
     <label class="lbl">Cỡ</label>
     <input type="range" id="szSlider" min="1" max="80" value="4" step="1" oninput="setSize(+this.value)">
@@ -280,20 +274,17 @@ input[type=color]{
     </div>
   </div>
 
-  <!-- Mờ -->
   <div class="tg" style="gap:5px">
     <label class="lbl">Mờ</label>
     <input type="range" id="opSlider" min="5" max="100" value="100" step="5" oninput="setOpacity(+this.value)">
     <label class="lbl" id="opVal">100%</label>
   </div>
 
-  <!-- Tô màu -->
   <div class="tg" style="gap:5px">
     <input type="checkbox" id="fillChk" style="cursor:pointer;width:14px;height:14px">
     <label class="lbl" for="fillChk" style="cursor:pointer">Tô màu</label>
   </div>
 
-  <!-- Zoom -->
   <div class="tg" style="gap:4px">
     <button class="zoom-btn" onclick="doZoom(-1)" title="Thu nhỏ [-]">−</button>
     <span id="zoomVal">100%</span>
@@ -301,19 +292,15 @@ input[type=color]{
     <button class="zoom-btn" onclick="fitViewportToArea()" title="Reset zoom [0]" style="font-size:11px;font-weight:700">⊡</button>
   </div>
 
-  <!-- Xóa -->
   <button class="btn-clear" onclick="doClear()">🗑 Xóa tất cả</button>
 </div>
 
-<!-- Canvas -->
 <div id="area">
   <div id="wrap">
     <canvas id="cv"></canvas>
     <canvas id="ov"></canvas>
   </div>
-  <!-- Eyedropper click layer -->
   <div id="eyedropOverlay"></div>
-  <!-- Kính lúp eyedropper -->
   <div id="loupe">
     <canvas id="loupeCanvas" width="80" height="80"></canvas>
     <div id="loupeColor"></div>
@@ -322,10 +309,8 @@ input[type=color]{
   <div id="zoomHint">100%</div>
 </div>
 
-<!-- Text input (absolute, positioned dynamically) -->
 <textarea id="textInput" rows="1" placeholder="Nhập văn bản..."></textarea>
 
-<!-- Status -->
 <div id="status">
   <span>Công cụ: <b id="stTool">Bút chì</b></span>
   <span>Màu: <b id="stColor">#000000</b></span>
@@ -351,19 +336,26 @@ const wrap = document.getElementById('wrap');
 const area = document.getElementById('area');
 
 // ══════════════════════════════════════════════════════════
-//  VIEWPORT (pan + zoom) — chỉ CSS transform, canvas vật lý không thay đổi
+//  VIEWPORT (pan + zoom) — Tối ưu hóa bằng requestAnimationFrame
 // ══════════════════════════════════════════════════════════
 const CANVAS_W = 1400;
 const CANVAS_H = 900;
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 10;
 let vpX = 0, vpY = 0, vpScale = 1;
+let ticking = false; // Flag kiểm soát luồng render rAF
 
 function applyViewport() {
-  wrap.style.transform = `translate(${vpX}px,${vpY}px) scale(${vpScale})`;
-  const pct = Math.round(vpScale * 100) + '%';
-  document.getElementById('zoomVal').textContent  = pct;
-  document.getElementById('stZoom').textContent   = pct;
+  if (!ticking) {
+    window.requestAnimationFrame(() => {
+      wrap.style.transform = `translate(${vpX}px,${vpY}px) scale(${vpScale})`;
+      const pct = Math.round(vpScale * 100) + '%';
+      document.getElementById('zoomVal').textContent  = pct;
+      document.getElementById('stZoom').textContent   = pct;
+      ticking = false;
+    });
+    ticking = true;
+  }
 }
 
 function clampViewport() {
@@ -808,21 +800,27 @@ textInput.addEventListener('keydown', e => {
 textInput.addEventListener('blur', () => { commitText(); });
 
 // ══════════════════════════════════════════════════════════
-//  TOUCH HANDLER — 1 ngón vẽ, 2 ngón pan/zoom
+//  TOUCH HANDLER — 1 ngón vẽ, 2 ngón pan/zoom mượt mà (Delta-based)
 // ══════════════════════════════════════════════════════════
 let touchMode = null;
-let pinchStartDist = 0, pinchStartScale = 1;
-let panStartVpX = 0, panStartVpY = 0;
-let panStartMidX = 0, panStartMidY = 0;
+let lastTouchDist = 0;
+let lastTouchMidX = 0;
+let lastTouchMidY = 0;
 let panHintTimer = null;
 
-function getTouchMid(t) { return { x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2 }; }
-function getTouchDist(t) { const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY; return Math.sqrt(dx*dx+dy*dy); }
+function getTouchMid(t) { 
+  return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 }; 
+}
+function getTouchDist(t) { 
+  const dx = t[0].clientX - t[1].clientX; 
+  const dy = t[0].clientY - t[1].clientY; 
+  return Math.sqrt(dx * dx + dy * dy); 
+}
 
 function showPanHint() {
   document.getElementById('panHint').classList.add('show');
   clearTimeout(panHintTimer);
-  panHintTimer = setTimeout(()=>document.getElementById('panHint').classList.remove('show'), 1500);
+  panHintTimer = setTimeout(() => document.getElementById('panHint').classList.remove('show'), 1500);
 }
 
 area.addEventListener('contextmenu', e => e.preventDefault());
@@ -830,6 +828,7 @@ area.addEventListener('contextmenu', e => e.preventDefault());
 area.addEventListener('touchstart', e => {
   e.preventDefault();
   const t = e.touches;
+  
   if (t.length === 1 && touchMode === null) {
     touchMode = 'draw';
     const p = clientToCanvas(t[0].clientX, t[0].clientY);
@@ -837,11 +836,13 @@ area.addEventListener('touchstart', e => {
   } else if (t.length === 2) {
     if (touchMode === 'draw' && drawing) cancelDraw();
     touchMode = 'pan';
-    pinchStartDist  = getTouchDist(t);
-    pinchStartScale = vpScale;
+    
+    // Ghi nhận mốc cơ sở ban đầu của khung hình đầu tiên
+    lastTouchDist = getTouchDist(t);
     const mid = getTouchMid(t);
-    panStartMidX = mid.x; panStartMidY = mid.y;
-    panStartVpX  = vpX;   panStartVpY  = vpY;
+    lastTouchMidX = mid.x;
+    lastTouchMidY = mid.y;
+    
     showPanHint();
   }
 }, { passive: false });
@@ -849,21 +850,45 @@ area.addEventListener('touchstart', e => {
 area.addEventListener('touchmove', e => {
   e.preventDefault();
   const t = e.touches;
+  
   if (touchMode === 'draw' && t.length === 1) {
     const p = clientToCanvas(t[0].clientX, t[0].clientY);
-    emitCursor(p.x, p.y); // FIX BUG 9: emit cursor on touch
+    emitCursor(p.x, p.y); 
     handleDrawMove(p.x, p.y);
   } else if (touchMode === 'pan' && t.length === 2) {
-    const mid  = getTouchMid(t);
+    const mid = getTouchMid(t);
     const dist = getTouchDist(t);
-    let newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (dist / pinchStartDist)));
-    const aRect  = area.getBoundingClientRect();
-    const midRelX = panStartMidX - aRect.left;
-    const midRelY = panStartMidY - aRect.top;
-    const sf = newScale / pinchStartScale;
-    vpX = midRelX - (midRelX - panStartVpX) * sf + (mid.x - panStartMidX);
-    vpY = midRelY - (midRelY - panStartVpY) * sf + (mid.y - panStartMidY);
+    
+    // 1. Tính toán hệ số phóng to/thu nhỏ dựa trên delta khung hình trước
+    let scaleFactor = 1;
+    if (lastTouchDist > 0 && dist > 0) {
+      scaleFactor = dist / lastTouchDist;
+    }
+    
+    const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale * scaleFactor));
+    const actualFactor = newScale / vpScale;
+    
+    // 2. Tìm tâm Zoom (chính là trung điểm hiện tại của 2 ngón tay so với khung hiển thị)
+    const areaRect = area.getBoundingClientRect();
+    const centerX = mid.x - areaRect.left;
+    const centerY = mid.y - areaRect.top;
+    
+    // Dịch chuyển ma trận tịnh tiến dịch theo tâm tương ứng
+    vpX = centerX - (centerX - vpX) * actualFactor;
+    vpY = centerY - (centerY - vpY) * actualFactor;
     vpScale = newScale;
+    
+    // 3. Cộng dồn khoảng kéo di chuyển (Pan Delta) của trung điểm ngón tay
+    const deltaX = mid.x - lastTouchMidX;
+    const deltaY = mid.y - lastTouchMidY;
+    vpX += deltaX;
+    vpY += deltaY;
+    
+    // Ghi đè trạng thái hiện tại làm mốc cho khung hình kế tiếp
+    lastTouchDist = dist;
+    lastTouchMidX = mid.x;
+    lastTouchMidY = mid.y;
+    
     clampViewport();
     applyViewport();
     flashZoom();
@@ -873,14 +898,21 @@ area.addEventListener('touchmove', e => {
 area.addEventListener('touchend', e => {
   e.preventDefault();
   const remaining = e.touches.length;
+  
   if (touchMode === 'draw' && remaining === 0) {
     const ct = e.changedTouches[0];
-    const p  = clientToCanvas(ct.clientX, ct.clientY);
+    const p = clientToCanvas(ct.clientX, ct.clientY);
     handleDrawEnd(p.x, p.y);
     touchMode = null;
-  } else if (touchMode === 'pan' && remaining <= 1) {
-    touchMode = null;
-    document.getElementById('panHint').classList.remove('show');
+  } else if (touchMode === 'pan') {
+    if (remaining === 0) {
+      touchMode = null;
+      document.getElementById('panHint').classList.remove('show');
+    } else if (remaining === 1) {
+      // Khi nhấc 1 ngón, cấu hình trạng thái về null để tránh việc vẽ đè ngoài ý muốn khi nhấc tay không đều
+      touchMode = null;
+      document.getElementById('panHint').classList.remove('show');
+    }
   }
 }, { passive: false });
 
