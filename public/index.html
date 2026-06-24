@@ -903,20 +903,70 @@ area.addEventListener('wheel', e => {
   flashZoom();
 }, { passive: false });
 
-cv.addEventListener('mousedown', e => {
-  if (e.button !== 0) return;
-  const p = clientToCanvas(e.clientX, e.clientY);
-  handleDrawStart(p.x, p.y, e.clientX, e.clientY);
+// ── Chuột phải = pan ──────────────────────────────────────
+let isPanning = false;
+let panLastX = 0, panLastY = 0;
+
+// Tắt context menu khi chuột phải trên canvas + area
+cv.addEventListener('contextmenu',   e => e.preventDefault());
+area.addEventListener('contextmenu', e => e.preventDefault());
+
+// mousedown trên AREA (không chỉ cv) để bắt chuột phải dù đang ở ngoài canvas
+area.addEventListener('mousedown', e => {
+  if (e.button === 2) {           // chuột PHẢI → pan
+    isPanning = true;
+    panLastX  = e.clientX;
+    panLastY  = e.clientY;
+    area.style.cursor = 'grabbing';
+    e.preventDefault();
+  } else if (e.button === 0 && e.target === cv) {  // chuột TRÁI trên canvas → vẽ
+    const p = clientToCanvas(e.clientX, e.clientY);
+    handleDrawStart(p.x, p.y, e.clientX, e.clientY);
+  }
 });
-cv.addEventListener('mousemove', e => {
-  const p = clientToCanvas(e.clientX, e.clientY);
-  document.getElementById('stPos').textContent = `${Math.round(p.x)}, ${Math.round(p.y)}`;
-  emitCursor(p.x, p.y);
-  if (drawing) handleDrawMove(p.x, p.y);
+
+// mousemove trên WINDOW để pan không bị dừng khi chuột ra ngoài canvas
+window.addEventListener('mousemove', e => {
+  if (isPanning) {
+    const dx = e.clientX - panLastX;
+    const dy = e.clientY - panLastY;
+    panLastX  = e.clientX;
+    panLastY  = e.clientY;
+    vpX += dx;
+    vpY += dy;
+    clampViewport();
+    applyViewport();
+    return;
+  }
+  // Chỉ xử lý move cho vẽ khi chuột đang ở trên canvas
+  if (e.target === cv || drawing) {
+    const p = clientToCanvas(e.clientX, e.clientY);
+    document.getElementById('stPos').textContent = `${Math.round(p.x)}, ${Math.round(p.y)}`;
+    emitCursor(p.x, p.y);
+    if (drawing) handleDrawMove(p.x, p.y);
+  }
 });
-// FIX BUG 3: mouseup và mouseleave đều commit (không cancel shape khi rời canvas)
-cv.addEventListener('mouseup',    e => { const p = clientToCanvas(e.clientX, e.clientY); handleDrawEnd(p.x, p.y); });
-cv.addEventListener('mouseleave', e => { const p = clientToCanvas(e.clientX, e.clientY); handleDrawEnd(p.x, p.y); });
+
+// mouseup trên WINDOW để không stuck khi nhả ngoài canvas
+window.addEventListener('mouseup', e => {
+  if (e.button === 2 && isPanning) {
+    isPanning = false;
+    area.style.cursor = '';
+    return;
+  }
+  if (e.button === 0 && drawing) {
+    const p = clientToCanvas(e.clientX, e.clientY);
+    handleDrawEnd(p.x, p.y);
+  }
+});
+
+cv.addEventListener('mouseleave', e => {
+  // Chỉ end draw khi không pan, và chỉ cho freehand (shape vẫn tiếp tục ra ngoài)
+  if (!isPanning && drawing && !isShape(tool)) {
+    const p = clientToCanvas(e.clientX, e.clientY);
+    handleDrawEnd(p.x, p.y);
+  }
+});
 
 // ══════════════════════════════════════════════════════════
 //  DRAW LOGIC
