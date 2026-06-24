@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>🎨 Bảng Vẽ Cộng Đồng</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
@@ -12,10 +12,12 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #e8e5df;
   height: 100vh;
+  height: 100dvh; /* dynamic viewport height — fix iOS Safari toolbar */
   display: flex;
   flex-direction: column;
   overflow: hidden;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 /* ── Header ── */
@@ -66,12 +68,16 @@ body {
   gap: 6px;
   flex-shrink: 0;
   flex-wrap: wrap;
+  /* Trên mobile toolbar scroll ngang nếu tràn */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tg {
   display: flex; align-items: center; gap: 3px;
   padding-right: 10px; margin-right: 4px;
   border-right: 1px solid #e8e5e0;
+  flex-shrink: 0;
 }
 .tg:last-child { border: none; padding: 0; margin: 0; }
 
@@ -82,8 +88,12 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 15px; color: #555;
   transition: background .1s, border-color .1s;
+  /* Đảm bảo touch dễ bấm hơn */
+  min-width: 36px; min-height: 36px;
+  -webkit-tap-highlight-color: transparent;
 }
 .tbtn:hover { background: #f5f3ef; }
+.tbtn:active { background: #eff6ff; }
 .tbtn.on { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
 .tbtn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
 
@@ -97,12 +107,14 @@ input[type=color] {
 }
 
 .swatch {
-  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
   border: 2px solid transparent;
   transition: transform .12s;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 .swatch:hover { transform: scale(1.18); }
+.swatch:active { transform: scale(1.1); }
 .swatch.on { border-color: #1a1a1a !important; }
 
 #sizeDisplay {
@@ -110,7 +122,7 @@ input[type=color] {
   display: flex; align-items: center; justify-content: center;
 }
 
-.vl { width: 1px; height: 22px; background: #e0ddd8; }
+.vl { width: 1px; height: 22px; background: #e0ddd8; flex-shrink: 0; }
 
 .btn-clear {
   margin-left: auto;
@@ -118,29 +130,59 @@ input[type=color] {
   border: 1px solid #fca5a5; border-radius: 6px;
   background: #fff1f1; color: #dc2626; cursor: pointer;
   transition: background .1s;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
 }
 .btn-clear:hover { background: #fee2e2; }
 
 /* ── Canvas area ── */
 #area {
-  flex: 1; overflow: hidden;
+  flex: 1;
+  overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   position: relative;
   background: #e8e5df;
+  /* QUAN TRỌNG: Tắt mọi gesture native của browser ở đây */
+  touch-action: none;
+  -ms-touch-action: none;
 }
 
-#wrap { position: relative; line-height: 0; }
+#wrap {
+  position: relative;
+  line-height: 0;
+  /* transform-origin cho pan/zoom */
+  transform-origin: 0 0;
+  will-change: transform;
+}
 
 #cv {
   display: block; background: #fff;
   cursor: crosshair;
   box-shadow: 0 4px 24px rgba(0,0,0,.15);
+  /* QUAN TRỌNG: canvas không nhận touch native */
+  touch-action: none;
+  -ms-touch-action: none;
 }
 
 #ov {
   position: absolute; top: 0; left: 0;
   pointer-events: none;
+  touch-action: none;
 }
+
+/* ── Pan indicator (hiện khi đang dùng 2 ngón) ── */
+#panIndicator {
+  position: absolute;
+  top: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.6); color: #fff;
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+#panIndicator.show { opacity: 1; }
 
 /* ── Remote cursors ── */
 .rcursor {
@@ -148,6 +190,7 @@ input[type=color] {
   pointer-events: none;
   transition: left .04s linear, top .04s linear;
   transform: translate(-2px, -2px);
+  z-index: 5;
 }
 .rcursor-label {
   font-size: 10px; font-weight: 600;
@@ -164,6 +207,8 @@ input[type=color] {
   display: flex; gap: 10px;
   font-size: 11px; color: #999;
   flex-shrink: 0;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 #status span b { color: #555; font-weight: 500; }
 </style>
@@ -233,6 +278,8 @@ input[type=color] {
     <canvas id="cv"></canvas>
     <canvas id="ov"></canvas>
   </div>
+  <!-- Hiển thị khi đang pan/zoom bằng 2 ngón -->
+  <div id="panIndicator">✌️ Di chuyển / Thu phóng</div>
 </div>
 
 <!-- Status -->
@@ -248,39 +295,80 @@ input[type=color] {
 const socket = io();
 
 // ─── Canvas setup ─────────────────────────────────────────
-const cv  = document.getElementById('cv');
-const ctx = cv.getContext('2d');
-const ov  = document.getElementById('ov');
+const cv   = document.getElementById('cv');
+const ctx  = cv.getContext('2d');
+const ov   = document.getElementById('ov');
 const octx = ov.getContext('2d');
+const wrap = document.getElementById('wrap');
+const area = document.getElementById('area');
 
+// ─── Viewport transform (pan + zoom) ─────────────────────
+// Toàn bộ pan/zoom áp dụng lên #wrap bằng CSS transform
+// Canvas vật lý (cv) KHÔNG thay đổi kích thước — chỉ visual transform
+let vpX = 0, vpY = 0, vpScale = 1;
+const MIN_SCALE = 0.2, MAX_SCALE = 8;
+
+function applyViewport() {
+  wrap.style.transform = `translate(${vpX}px, ${vpY}px) scale(${vpScale})`;
+}
+
+function clampViewport() {
+  // Giới hạn pan để không kéo canvas ra ngoài quá nhiều
+  const maxPanX = area.clientWidth  * 0.8;
+  const maxPanY = area.clientHeight * 0.8;
+  vpX = Math.max(-cv.width  * vpScale + area.clientWidth  * 0.2, Math.min(maxPanX, vpX));
+  vpY = Math.max(-cv.height * vpScale + area.clientHeight * 0.2, Math.min(maxPanY, vpY));
+}
+
+function centerViewport() {
+  // Căn giữa canvas trong area
+  vpX = (area.clientWidth  - cv.width  * vpScale) / 2;
+  vpY = (area.clientHeight - cv.height * vpScale) / 2;
+  applyViewport();
+}
+
+// ─── Canvas sizing ─────────────────────────────────────────
 function fitCanvas() {
-  const area = document.getElementById('area');
-  const W = Math.floor(Math.min(area.clientWidth  - 24, 1400));
-  const H = Math.floor(Math.min(area.clientHeight - 24, 900));
-  if (cv.width === W && cv.height === H) return; // Không resize nếu kích thước không đổi
+  // Canvas vật lý luôn fixed 1400x900 (hoặc nhỏ hơn nếu màn hình bé)
+  // Không resize theo màn hình — thay vào đó dùng pan/zoom
+  const CANVAS_W = 1400;
+  const CANVAS_H = 900;
+
+  if (cv.width === CANVAS_W && cv.height === CANVAS_H) {
+    // Chỉ re-center viewport
+    fitViewportToArea();
+    return;
+  }
 
   const tmp = document.createElement('canvas');
   tmp.width = cv.width; tmp.height = cv.height;
   tmp.getContext('2d').drawImage(cv, 0, 0);
 
-  cv.width = W; cv.height = H;
-  ov.width = W; ov.height = H;
+  cv.width  = CANVAS_W; cv.height = CANVAS_H;
+  ov.width  = CANVAS_W; ov.height = CANVAS_H;
 
   ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, W, H);
-  ctx.drawImage(tmp, 0, 0);
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  if (tmp.width > 0) ctx.drawImage(tmp, 0, 0);
 
-  // FIX: snap bị stale sau resize → cancel shape drawing
-  snap = null;
-  drawing = false;
+  snap = null; drawing = false;
+  fitViewportToArea();
 }
 
-// FIX: Debounce resize để tránh flicker trên mobile khi bàn phím mở
+function fitViewportToArea() {
+  // Scale để canvas vừa khít area, rồi căn giữa
+  const scaleX = area.clientWidth  / cv.width;
+  const scaleY = area.clientHeight / cv.height;
+  vpScale = Math.min(scaleX, scaleY) * 0.97; // 97% để có padding nhỏ
+  vpScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale));
+  centerViewport();
+}
+
 let resizeTimer;
 window.addEventListener('load',   fitCanvas);
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(fitCanvas, 250);
+  resizeTimer = setTimeout(fitViewportToArea, 200);
 });
 
 // ─── State ────────────────────────────────────────────────
@@ -290,7 +378,7 @@ let size    = 4;
 let opacity = 1;
 let drawing = false;
 let sx, sy, lx, ly;
-let snap    = null;  // snapshot CHỈ dùng trong endDraw, không restore trong moveDraw
+let snap    = null;
 let myId    = null;
 let myColor = '#555';
 
@@ -355,16 +443,19 @@ function updateSzDot() {
   d.style.background = color || '#000';
 }
 
-// ─── Drawing utilities ────────────────────────────────────
-function pos(e) {
-  const r  = cv.getBoundingClientRect();
-  const sx2 = cv.width  / r.width;
-  const sy2 = cv.height / r.height;
-  const src = e.touches ? e.touches[0] : e.changedTouches ? e.changedTouches[0] : e;
-  return {
-    x: (src.clientX - r.left) * sx2,
-    y: (src.clientY - r.top)  * sy2
-  };
+// ─── Coordinate helpers ───────────────────────────────────
+// Chuyển tọa độ client (screen pixel) → tọa độ canvas vật lý
+// Phải tính ngược lại viewport transform (vpX, vpY, vpScale)
+function clientToCanvas(clientX, clientY) {
+  const areaRect = area.getBoundingClientRect();
+  // Vị trí tương đối với area
+  const relX = clientX - areaRect.left;
+  const relY = clientY - areaRect.top;
+  // Bỏ transform: translate(vpX,vpY) scale(vpScale)
+  // wrap bắt đầu ở góc trên trái của area
+  const canvasX = (relX - vpX) / vpScale;
+  const canvasY = (relY - vpY) / vpScale;
+  return { x: canvasX, y: canvasY };
 }
 
 function h2rgba(hex, a) {
@@ -374,7 +465,7 @@ function h2rgba(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-// applyDraw — dùng chung cho local + remote + history replay
+// ─── applyDraw ────────────────────────────────────────────
 function applyDraw(d, target) {
   const c = target || ctx;
   c.save();
@@ -428,23 +519,184 @@ function applyDraw(d, target) {
   c.restore();
 }
 
-// ─── Mouse / Touch events ─────────────────────────────────
-cv.addEventListener('mousedown',  startDraw);
-cv.addEventListener('mousemove',  moveDraw);
-cv.addEventListener('mouseup',    endDraw);
-cv.addEventListener('mouseleave', endDraw);
-cv.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e); }, { passive: false });
-cv.addEventListener('touchmove',  e => { e.preventDefault(); moveDraw(e);  }, { passive: false });
-cv.addEventListener('touchend',   e => { e.preventDefault(); endDraw(e);   }, { passive: false });
+// ─── TOUCH HANDLER (Core logic) ──────────────────────────
+// Phân biệt rõ:
+//   1 ngón  → vẽ (startDraw / moveDraw / endDraw)
+//   2 ngón  → pan + pinch-to-zoom (không vẽ)
+//   3+ ngón → bỏ qua
 
-function startDraw(e) {
+let touchMode = null;      // null | 'draw' | 'pan'
+let pinchStartDist = 0;
+let pinchStartScale = 1;
+let panStartVpX = 0, panStartVpY = 0;
+let panStartMidX = 0, panStartMidY = 0;
+let panIndicatorTimer = null;
+
+function getTouchMid(touches) {
+  const t0 = touches[0], t1 = touches[1];
+  return {
+    x: (t0.clientX + t1.clientX) / 2,
+    y: (t0.clientY + t1.clientY) / 2,
+  };
+}
+
+function getTouchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function showPanIndicator() {
+  document.getElementById('panIndicator').classList.add('show');
+  clearTimeout(panIndicatorTimer);
+  panIndicatorTimer = setTimeout(() => {
+    document.getElementById('panIndicator').classList.remove('show');
+  }, 1500);
+}
+
+function hidePanIndicator() {
+  clearTimeout(panIndicatorTimer);
+  document.getElementById('panIndicator').classList.remove('show');
+}
+
+// Ngăn context menu trên mobile khi giữ lâu
+area.addEventListener('contextmenu', e => e.preventDefault());
+
+area.addEventListener('touchstart', e => {
+  e.preventDefault();
+
+  const touches = e.touches;
+
+  if (touches.length === 1 && touchMode === null) {
+    // 1 ngón → vẽ
+    touchMode = 'draw';
+    const p = clientToCanvas(touches[0].clientX, touches[0].clientY);
+    startDrawAt(p.x, p.y);
+
+  } else if (touches.length === 2) {
+    // 2 ngón → bắt đầu pan/zoom
+    // Nếu đang vẽ thì cancel
+    if (touchMode === 'draw' && drawing) {
+      cancelDraw();
+    }
+    touchMode = 'pan';
+
+    pinchStartDist  = getTouchDist(touches);
+    pinchStartScale = vpScale;
+    const mid = getTouchMid(touches);
+    panStartMidX = mid.x;
+    panStartMidY = mid.y;
+    panStartVpX = vpX;
+    panStartVpY = vpY;
+    showPanIndicator();
+  }
+}, { passive: false });
+
+area.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const touches = e.touches;
+
+  if (touchMode === 'draw' && touches.length === 1) {
+    const p = clientToCanvas(touches[0].clientX, touches[0].clientY);
+    moveDrawAt(p.x, p.y);
+
+  } else if (touchMode === 'pan' && touches.length === 2) {
+    const mid = getTouchMid(touches);
+    const dist = getTouchDist(touches);
+
+    // Tính scale mới từ pinch
+    let newScale = pinchStartScale * (dist / pinchStartDist);
+    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+
+    // Tính điểm zoom (mid point) trên canvas
+    const areaRect = area.getBoundingClientRect();
+    const midRelX  = panStartMidX - areaRect.left;
+    const midRelY  = panStartMidY - areaRect.top;
+
+    // Pan delta (kết hợp pan + zoom về điểm giữa 2 ngón)
+    const panDX = mid.x - panStartMidX;
+    const panDY = mid.y - panStartMidY;
+
+    // Zoom về điểm mid: giữ nguyên điểm canvas dưới mid
+    const scaleFactor = newScale / pinchStartScale;
+    vpX = midRelX - (midRelX - panStartVpX) * scaleFactor + panDX;
+    vpY = midRelY - (midRelY - panStartVpY) * scaleFactor + panDY;
+    vpScale = newScale;
+
+    clampViewport();
+    applyViewport();
+  }
+}, { passive: false });
+
+area.addEventListener('touchend', e => {
+  e.preventDefault();
+  const remaining = e.touches.length;
+
+  if (touchMode === 'draw' && remaining === 0) {
+    // Ngón tay nhấc lên → kết thúc vẽ
+    const ct = e.changedTouches[0];
+    const p  = clientToCanvas(ct.clientX, ct.clientY);
+    endDrawAt(p.x, p.y);
+    touchMode = null;
+
+  } else if (touchMode === 'pan') {
+    if (remaining === 0 || remaining === 1) {
+      // Kết thúc pan
+      touchMode = null;
+      hidePanIndicator();
+
+      // Nếu còn 1 ngón → chuyển sang vẽ ngay (tránh nhấp đôi nhầm)
+      // Không bắt đầu vẽ ngay để tránh tap nhầm, đợi touchstart mới
+    }
+  }
+}, { passive: false });
+
+// ─── Mouse events ─────────────────────────────────────────
+// Mouse wheel để zoom (desktop)
+area.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale * delta));
+
+  const areaRect = area.getBoundingClientRect();
+  const mouseX   = e.clientX - areaRect.left;
+  const mouseY   = e.clientY - areaRect.top;
+
+  // Zoom về vị trí chuột
+  vpX = mouseX - (mouseX - vpX) * (newScale / vpScale);
+  vpY = mouseY - (mouseY - vpY) * (newScale / vpScale);
+  vpScale = newScale;
+
+  clampViewport();
+  applyViewport();
+}, { passive: false });
+
+cv.addEventListener('mousedown', e => {
+  const p = clientToCanvas(e.clientX, e.clientY);
+  startDrawAt(p.x, p.y);
+});
+cv.addEventListener('mousemove', e => {
+  const p = clientToCanvas(e.clientX, e.clientY);
+  document.getElementById('stPos').textContent = `${Math.round(p.x)}, ${Math.round(p.y)}`;
+  emitCursor(p.x, p.y);
+  if (drawing) moveDrawAt(p.x, p.y);
+});
+cv.addEventListener('mouseup',    e => {
+  const p = clientToCanvas(e.clientX, e.clientY);
+  endDrawAt(p.x, p.y);
+});
+cv.addEventListener('mouseleave', e => {
+  const p = clientToCanvas(e.clientX, e.clientY);
+  endDrawAt(p.x, p.y);
+});
+
+// ─── Draw logic (tách khỏi event handler) ─────────────────
+function startDrawAt(x, y) {
   drawing = true;
-  const p = pos(e);
-  sx = lx = p.x;
-  sy = ly = p.y;
+  sx = lx = x;
+  sy = ly = y;
 
   if (isShape(tool)) {
-    // FIX: Chỉ lưu snap để restore ở endDraw, KHÔNG dùng trong moveDraw
     snap = ctx.getImageData(0, 0, cv.width, cv.height);
     return;
   }
@@ -454,44 +706,43 @@ function startDraw(e) {
   socket.emit('draw', d);
 }
 
-function moveDraw(e) {
-  const p = pos(e);
-  document.getElementById('stPos').textContent = `${Math.round(p.x)}, ${Math.round(p.y)}`;
-  socket.emit('cursor', { x: p.x, y: p.y });
-
+function moveDrawAt(x, y) {
   if (!drawing) return;
 
   if (!isShape(tool)) {
-    // Pen / brush / eraser: vẽ thẳng lên canvas chính
-    const d = mkData('move', lx, ly, p.x, p.y);
+    const d = mkData('move', lx, ly, x, y);
     applyDraw(d);
     socket.emit('draw', d);
-    lx = p.x; ly = p.y;
+    lx = x; ly = y;
   } else {
-    // FIX: Shape preview chỉ vẽ lên OVERLAY, KHÔNG đụng canvas chính
-    // Canvas chính được giữ nguyên (snap), overlay clear + vẽ preview
     octx.clearRect(0, 0, ov.width, ov.height);
-    const d = mkData(tool, sx, sy, p.x, p.y);
+    const d = mkData(tool, sx, sy, x, y);
     applyDraw(d, octx);
   }
 }
 
-function endDraw(e) {
+function endDrawAt(x, y) {
   if (!drawing) return;
   drawing = false;
 
   if (isShape(tool)) {
-    const p = pos(e); // pos() tự handle cả changedTouches
     octx.clearRect(0, 0, ov.width, ov.height);
-
-    // FIX: Restore snap để đảm bảo không giữ stroke remote bị mất
-    // (snap là trạng thái canvas lúc bắt đầu vẽ shape)
     if (snap) { ctx.putImageData(snap, 0, 0); snap = null; }
-
-    const d = mkData(tool, sx, sy, p.x, p.y);
-    applyDraw(d);        // commit lên canvas chính
+    const d = mkData(tool, sx, sy, x, y);
+    applyDraw(d);
     socket.emit('draw', d);
   }
+}
+
+function cancelDraw() {
+  // Hủy nét vẽ đang dở (khi chuyển từ 1 ngón sang 2 ngón)
+  if (!drawing) return;
+  drawing = false;
+  if (snap) {
+    ctx.putImageData(snap, 0, 0);
+    snap = null;
+  }
+  octx.clearRect(0, 0, ov.width, ov.height);
 }
 
 function isShape(t) {
@@ -505,8 +756,6 @@ function mkData(type, x0, y0, x1, y1) {
     tool,
     color:   tool === 'eraser' ? '#ffffff' : color,
     size:    tool === 'eraser' ? size * 2 : isBrush ? size * 2.8 : size,
-    // FIX: Brush opacity — không nhân 0.55 vào data, thay vào đó dùng globalAlpha riêng
-    // để người remote thấy đúng độ mờ. Dùng 0.7 làm hệ số brush feel.
     opacity: isBrush ? Math.min(opacity * 0.7, 1) : opacity,
     fill:    document.getElementById('fillChk').checked,
     x0, y0, x1, y1
@@ -518,7 +767,6 @@ function clearCanvas() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, cv.width, cv.height);
   octx.clearRect(0, 0, ov.width, ov.height);
-  // FIX: Cancel shape đang vẽ dở khi nhận clear từ remote
   snap    = null;
   drawing = false;
 }
@@ -532,23 +780,18 @@ function doClear() {
 // ─── Keyboard shortcuts ───────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
-  // FIX: Bỏ qua Ctrl/Cmd/Alt combos (Ctrl+C, Ctrl+Z, v.v.)
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const m = { p:'pen', b:'brush', e:'eraser', l:'line', r:'rect', c:'circle' };
   if (m[e.key]) setTool(m[e.key]);
+  // Phím 0 → reset zoom về fit
+  if (e.key === '0') fitViewportToArea();
 });
 
 // ─── Remote cursors ───────────────────────────────────────
 const rcMap = {};
 
-function canvasToCss(x, y) {
-  const r = cv.getBoundingClientRect();
-  return {
-    cx: x * (r.width  / cv.width),
-    cy: y * (r.height / cv.height)
-  };
-}
-
+// Chuyển tọa độ canvas → CSS (trong #wrap, đã bị transform)
+// Cursor hiển thị trong #wrap nên chỉ cần đặt left/top = tọa độ canvas
 function makeCursor(socketId, label, col) {
   const el = document.createElement('div');
   el.className = 'rcursor';
@@ -559,14 +802,13 @@ function makeCursor(socketId, label, col) {
             fill="${col}" stroke="white" stroke-width="1" stroke-linejoin="round"/>
     </svg>
     <div class="rcursor-label" style="background:${col}">${label}</div>`;
-  document.getElementById('wrap').appendChild(el);
+  wrap.appendChild(el);
   rcMap[socketId] = el;
   return el;
 }
 
-// FIX: Throttle cursor emit — không flood server khi di chuột nhanh
 let lastCursorEmit = 0;
-const CURSOR_THROTTLE = 30; // ms
+const CURSOR_THROTTLE = 30;
 
 function emitCursor(x, y) {
   const now = Date.now();
@@ -579,9 +821,9 @@ socket.on('cursor', ({ id, userId, color: c, x, y }) => {
   if (id === myId) return;
   let el = rcMap[id];
   if (!el) el = makeCursor(id, userId || id.slice(0,4), c || '#666');
-  const { cx, cy } = canvasToCss(x, y);
-  el.style.left = cx + 'px';
-  el.style.top  = cy + 'px';
+  // Cursor đặt trực tiếp trên canvas coordinate (vì nằm trong #wrap)
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
 });
 
 socket.on('removeCursor', id => {
@@ -593,11 +835,9 @@ socket.on('init', ({ history, me, users }) => {
   myId    = socket.id;
   myColor = me.color;
   document.getElementById('meTag').textContent = `Bạn: ${me.id}`;
-  document.getElementById('meTag').style.borderLeft   = `3px solid ${me.color}`;
-  document.getElementById('meTag').style.paddingLeft  = '7px';
+  document.getElementById('meTag').style.borderLeft  = `3px solid ${me.color}`;
+  document.getElementById('meTag').style.paddingLeft = '7px';
 
-  // FIX: Clear canvas trước khi replay history
-  // (tránh vẽ đè nếu socket reconnect)
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, cv.width, cv.height);
   history.forEach(d => applyDraw(d));
@@ -605,13 +845,8 @@ socket.on('init', ({ history, me, users }) => {
   updateUserBadges(users);
 });
 
-socket.on('draw', d => applyDraw(d));
-
-socket.on('clear', () => {
-  // FIX: Dùng clearCanvas() thay vì chỉ fill white
-  // để cancel shape đang vẽ dở + clear overlay
-  clearCanvas();
-});
+socket.on('draw',  d  => applyDraw(d));
+socket.on('clear', () => clearCanvas());
 
 socket.on('userList', users => {
   document.getElementById('countTxt').textContent = users.length + ' người';
