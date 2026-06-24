@@ -202,7 +202,7 @@ input[type=color]{
 #status::-webkit-scrollbar{display:none}
 #status span b{color:#555;font-weight:600}
 
-/* Text input overlay - Đặt trong bộ wrap để đồng bộ hóa transform */
+/* Text input overlay */
 #textInput{
   position:absolute;display:none;
   border:2px dashed #3b82f6;background:transparent;
@@ -401,7 +401,7 @@ function initCanvas() {
   ov.height = CANVAS_H;
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-  snap = null; drawing = false;
+  drawing = false;
   fitViewportToArea();
 }
 
@@ -421,7 +421,6 @@ let size    = 4;
 let opacity = 1;
 let drawing = false;
 let sx, sy, lx, ly;
-let snap    = null;
 let myId    = null;
 let myColor = '#555';
 
@@ -555,7 +554,6 @@ function applyDraw(d, target) {
   const c = target || ctx;
   c.save();
   
-  // Tẩy luôn luôn đạt 100% độ opaque đè màu trắng lên canvas, các công cụ khác tuân theo độ mờ alpha slider
   c.globalAlpha = d.tool === 'eraser' ? 1 : (d.opacity ?? 1);
   c.lineWidth   = d.size;
   c.lineCap     = 'round';
@@ -566,7 +564,6 @@ function applyDraw(d, target) {
   c.strokeStyle = col;
   c.fillStyle   = h2rgba(col, (d.opacity ?? 1) * 0.18);
 
-  // Hiệu ứng cọ mềm thực tế sử dụng shadowBlur mịn màng
   if (d.tool === 'brush') {
     c.shadowColor = col;
     c.shadowBlur  = d.size * 0.4;
@@ -609,7 +606,7 @@ function applyDraw(d, target) {
     case 'text':
       c.fillStyle    = col;
       c.font         = `${d.size * 4}px sans-serif`;
-      c.textBaseline = 'top'; // Khớp chuẩn xác điểm đặt text từ góc trên cùng bên trái
+      c.textBaseline = 'top'; 
       c.fillText(d.text, d.x0, d.y0);
       break;
   }
@@ -617,7 +614,7 @@ function applyDraw(d, target) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  FLOOD FILL (Thuật toán quét tối ưu hóa chống tràn/treo tab)
+//  FLOOD FILL
 // ══════════════════════════════════════════════════════════
 function floodFill(c, startX, startY, fillColorHex, alpha) {
   const imgData = c.getImageData(0, 0, cv.width, cv.height);
@@ -667,7 +664,6 @@ function floodFill(c, startX, startY, fillColorHex, alpha) {
     for (const n of neighbors) {
       if (n !== false && !visited[n]) {
         const nIdx = n * 4;
-        // Kiểm tra điều kiện tiệm cận màu trước khi push giúp giảm kích thước stack lặp tối đa
         if (matchSeed(nIdx)) {
           visited[n] = 1;
           setPixel(nIdx);
@@ -740,7 +736,7 @@ function pickColorAt(cx, cy) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  TEXT TOOL (Fix hoàn chỉnh định vị 1:1 theo canvas tỉ lệ thực)
+//  TEXT TOOL
 // ══════════════════════════════════════════════════════════
 const textInput = document.getElementById('textInput');
 let textX = 0, textY = 0;
@@ -750,7 +746,7 @@ function startText(canvasX, canvasY, screenX, screenY) {
   textInput.style.display  = 'block';
   textInput.style.left     = canvasX + 'px';
   textInput.style.top      = canvasY + 'px';
-  textInput.style.fontSize = (size * 4) + 'px'; // Cỡ chữ tương thích thực tế với kích thước canvas nền
+  textInput.style.fontSize = (size * 4) + 'px'; 
   textInput.style.color    = color;
   textInput.value = '';
   textInput.focus();
@@ -926,13 +922,6 @@ window.addEventListener('mouseup', e => {
   }
 });
 
-cv.addEventListener('mouseleave', e => {
-  if (!isPanning && drawing && !isShape(tool)) {
-    const p = clientToCanvas(e.clientX, e.clientY);
-    handleDrawEnd(p.x, p.y);
-  }
-});
-
 // ══════════════════════════════════════════════════════════
 //  DRAW LOGIC
 // ══════════════════════════════════════════════════════════
@@ -956,10 +945,8 @@ function handleDrawStart(x, y, screenX, screenY) {
   sx = lx = x;
   sy = ly = y;
 
-  if (isShape(tool)) {
-    snap = ctx.getImageData(0, 0, cv.width, cv.height);
-    return;
-  }
+  if (isShape(tool)) return; // Không snapshot đè trạng thái ở đây để tránh lỗi đồng bộ cộng tác
+
   const d = mkData('dot', sx, sy, sx, sy);
   applyDraw(d);
   socket.emit('draw', d);
@@ -983,7 +970,6 @@ function handleDrawEnd(x, y) {
   drawing = false;
   if (isShape(tool)) {
     octx.clearRect(0, 0, ov.width, ov.height);
-    if (snap) { ctx.putImageData(snap, 0, 0); snap = null; }
     const d = mkData(tool, sx, sy, x, y);
     applyDraw(d);
     socket.emit('draw', d);
@@ -994,7 +980,6 @@ function cancelDraw() {
   if (!drawing) return;
   drawing = false;
   if (undoStack.length) { ctx.putImageData(undoStack.pop(), 0, 0); updateUndoButtons(); }
-  if (snap) { snap = null; }
   octx.clearRect(0, 0, ov.width, ov.height);
 }
 
@@ -1020,7 +1005,7 @@ function clearCanvas() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, cv.width, cv.height);
   octx.clearRect(0, 0, ov.width, ov.height);
-  snap = null; drawing = false;
+  drawing = false;
   undoStack = []; redoStack = [];
   updateUndoButtons();
 }
@@ -1109,9 +1094,19 @@ socket.on('init', ({ history, me, users }) => {
 
 socket.on('draw',     d  => applyDraw(d));
 socket.on('clear',    () => clearCanvas());
+
 socket.on('userList', users => {
   document.getElementById('countTxt').textContent = users.length + ' người';
   updateUserBadges(users);
+  
+  // Xóa bỏ triệt để các "Con trỏ ma" (Ghost Cursors) bị kẹt do lỗi kết nối mạng
+  const currentIds = users.map(u => u.socketId || u.id);
+  for (const id in rcMap) {
+    if (!currentIds.includes(id) && id !== myId) {
+      rcMap[id].remove();
+      delete rcMap[id];
+    }
+  }
 });
 
 function updateUserBadges(users) {
