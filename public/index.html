@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🎨 Bảng Vẽ Cộng Đồng</title>
+<title>🎨 Bảng Vẽ Cộng Đồng - Sổ Vẽ Đa Trang & Lớp</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -43,7 +43,6 @@ body{
 }
 #toolbar::-webkit-scrollbar{display:none}
 
-/* Nhóm tool */
 .tg{
   display:flex;align-items:center;gap:2px;
   padding-right:8px;margin-right:4px;
@@ -71,7 +70,6 @@ body{
   font-size:8px;color:#aaa;font-weight:600;
 }
 
-/* Zoom controls */
 .zoom-btn{
   width:28px;height:28px;border:1px solid #d0cdc8;border-radius:5px;
   background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -118,7 +116,11 @@ input[type=color]{
 
 #szDot{border-radius:50%;background:#000;transition:all .15s}
 
-/* ── Canvas area ── */
+/* ── Main Workspace Partition ── */
+#workspace{
+  flex:1;display:flex;flex-direction:row;overflow:hidden;position:relative;
+}
+
 #area{
   flex:1;overflow:hidden;
   display:flex;align-items:center;justify-content:center;
@@ -129,15 +131,74 @@ input[type=color]{
 #wrap{
   position:relative;line-height:0;
   transform-origin:0 0;will-change:transform;
+  width:1400px;height:900px;
+  background:#fff;
+  box-shadow:0 2px 20px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.1);
 }
 
-#cv{
-  display:block;background:#fff;
-  cursor:crosshair;
-  box-shadow:0 2px 20px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.1);
-  touch-action:none;-ms-touch-action:none;
+#layersContainer{
+  position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;
 }
-#ov{position:absolute;top:0;left:0;pointer-events:none;touch-action:none}
+#layersContainer canvas{
+  position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;
+}
+
+#ov{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;touch-action:none;z-index:10}
+
+/* ── Sidebar Panels ── */
+#sidebar{
+  width:250px;background:#f5f3f0;border-left:2px solid #c0bdb8;
+  display:flex;flex-direction:column;flex-shrink:0;z-index:40;
+}
+.panel-section{
+  padding:12px;border-bottom:1px solid #c8c5c0;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.panel-section.flexible{flex:1}
+.panel-title{
+  font-size:11px;font-weight:700;color:#666;
+  margin-bottom:8px;display:flex;justify-content:between;align-items:center;
+  letter-spacing:0.5px;
+}
+.panel-btn{
+  padding:3px 8px;font-size:11px;font-weight:600;
+  border:1px solid #b0ada8;border-radius:4px;background:#fff;
+  cursor:pointer;transition:all 0.1s;
+}
+.panel-btn:hover{background:#e8e5e0}
+
+.list-container{
+  flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;
+  padding-right:2px;
+}
+.list-container::-webkit-scrollbar{width:4px}
+.list-container::-webkit-scrollbar-thumb{background:#c0bdb8;border-radius:2px}
+
+/* Item styling */
+.item-card{
+  background:#fff;border:1px solid #d0cdc8;border-radius:6px;
+  padding:8px;display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;transition:all 0.1s;gap:6px;
+}
+.item-card:hover{border-color:#a8a5a0;background:#faf9f7}
+.item-card.active{
+  background:#e8f2ff;border-color:#3b82f6;box-shadow:0 1px 3px rgba(59,130,246,0.15);
+}
+.item-name{font-size:12px;font-weight:500;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.item-card.active .item-name{font-weight:600;color:#1d4ed8}
+
+.item-actions{display:flex;align-items:center;gap:6px;}
+.action-icon{
+  font-size:13px;color:#777;cursor:pointer;padding:2px;border-radius:3px;
+}
+.action-icon:hover{background:rgba(0,0,0,0.06);color:#1a1a1a}
+.action-icon.danger:hover{color:#dc2626;background:#fee2e2}
+
+.layer-meta{
+  display:flex;align-items:center;gap:4px;width:100%;margin-top:4px;
+}
+.layer-meta label{font-size:10px;color:#888}
+.layer-meta input[type=range]{flex:1;height:3px;accent-color:#22c55e}
 
 /* Eyedropper overlay */
 #eyedropOverlay{
@@ -147,7 +208,7 @@ input[type=color]{
 }
 #eyedropOverlay.active{display:block}
 
-/* Loupe (kính lúp eyedropper) */
+/* Loupe */
 #loupe{
   position:absolute;width:80px;height:80px;border-radius:50%;
   border:3px solid #333;box-shadow:0 2px 8px rgba(0,0,0,.4);
@@ -162,7 +223,7 @@ input[type=color]{
   text-shadow:0 1px 2px rgba(0,0,0,.8);
 }
 
-/* Pan indicator */
+/* Indicators */
 #panHint{
   position:absolute;top:10px;left:50%;transform:translateX(-50%);
   background:rgba(0,0,0,.65);color:#fff;
@@ -172,7 +233,6 @@ input[type=color]{
 }
 #panHint.show{opacity:1}
 
-/* Zoom indicator */
 #zoomHint{
   position:absolute;bottom:14px;right:14px;
   background:rgba(0,0,0,.55);color:#fff;
@@ -181,18 +241,17 @@ input[type=color]{
 }
 #zoomHint.show{opacity:1}
 
-/* Remote cursors */
 .rcursor{
   position:absolute;pointer-events:none;
   transition:left .05s linear,top .05s linear;
-  transform:translate(-2px,-2px);z-index:5;
+  transform:translate(-2px,-2px);z-index:15;
 }
 .rcursor-label{
   font-size:10px;font-weight:600;color:#fff;border-radius:4px;
   padding:1px 5px;margin-top:1px;white-space:nowrap;
 }
 
-/* ── Status bar ── */
+/* Status bar */
 #status{
   background:#f5f3f0;border-top:1px solid #c8c5c0;
   padding:3px 12px;display:flex;gap:12px;
@@ -224,7 +283,6 @@ input[type=color]{
 </div>
 
 <div id="toolbar">
-
   <div class="tg">
     <button class="btn-undo" id="btnUndo" title="Hoàn tác [Ctrl+Z]" onclick="doUndo()">↩</button>
     <button class="btn-redo" id="btnRedo" title="Làm lại [Ctrl+Y]"  onclick="doRedo()">↪</button>
@@ -292,21 +350,42 @@ input[type=color]{
     <button class="zoom-btn" onclick="fitViewportToArea()" title="Reset zoom [0]" style="font-size:11px;font-weight:700">⊡</button>
   </div>
 
-  <button class="btn-clear" onclick="doClear()">🗑 Xóa tất cả</button>
+  <button class="btn-clear" onclick="doClear()">🗑 Xóa Lớp Hiện Tại</button>
 </div>
 
-<div id="area">
-  <div id="wrap">
-    <canvas id="cv"></canvas>
-    <canvas id="ov"></canvas>
+<div id="workspace">
+  <div id="area">
+    <div id="wrap">
+      <div id="layersContainer"></div>
+      <canvas id="ov"></canvas>
+    </div>
+    
+    <div id="eyedropOverlay"></div>
+    <div id="loupe">
+      <canvas id="loupeCanvas" width="80" height="80"></canvas>
+      <div id="loupeColor"></div>
+    </div>
+    <div id="panHint">✌️ Di chuyển / Thu phóng</div>
+    <div id="zoomHint">100%</div>
   </div>
-  <div id="eyedropOverlay"></div>
-  <div id="loupe">
-    <canvas id="loupeCanvas" width="80" height="80"></canvas>
-    <div id="loupeColor"></div>
+
+  <div id="sidebar">
+    <div class="panel-section flexible">
+      <div class="panel-title">
+        <span>📖 DANH SÁCH TRANG</span>
+        <button class="panel-btn" onclick="createNewPageAction()">+ Thêm trang</button>
+      </div>
+      <div id="pagesList" class="list-container"></div>
+    </div>
+
+    <div class="panel-section flexible">
+      <div class="panel-title">
+        <span>🥞 LỚP VẼ (CỦA TRANG)</span>
+        <button class="panel-btn" onclick="createNewLayerAction()">+ Thêm lớp</button>
+      </div>
+      <div id="layersList" class="list-container"></div>
+    </div>
   </div>
-  <div id="panHint">✌️ Di chuyển / Thu phóng</div>
-  <div id="zoomHint">100%</div>
 </div>
 
 <textarea id="textInput" rows="1" placeholder="Nhập văn bản..."></textarea>
@@ -316,72 +395,305 @@ input[type=color]{
   <span>Màu: <b id="stColor">#000000</b></span>
   <span>Cỡ: <b id="stSize">4px</b></span>
   <span>Vị trí: <b id="stPos">—</b></span>
+  <span>Trang: <b id="stPage">—</b></span>
+  <span>Lớp: <b id="stLayer">—</b></span>
   <span>Zoom: <b id="stZoom">100%</b></span>
 </div>
 
 <script>
 // ══════════════════════════════════════════════════════════
-//  SOCKET
+//  SOCKET ENGINE
 // ══════════════════════════════════════════════════════════
 const socket = io();
 
 // ══════════════════════════════════════════════════════════
-//  CANVAS REFS
+//  DOM REFS
 // ══════════════════════════════════════════════════════════
-const cv   = document.getElementById('cv');
-const ctx  = cv.getContext('2d');
 const ov   = document.getElementById('ov');
 const octx = ov.getContext('2d');
 const wrap = document.getElementById('wrap');
 const area = document.getElementById('area');
+const layersContainer = document.getElementById('layersContainer');
 
-// ══════════════════════════════════════════════════════════
-//  VIEWPORT (pan + zoom) — Tối ưu hóa bằng requestAnimationFrame
-// ══════════════════════════════════════════════════════════
+// Điểm neo kích thước vật lý cố định
 const CANVAS_W = 1400;
 const CANVAS_H = 900;
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 10;
 let vpX = 0, vpY = 0, vpScale = 1;
-let ticking = false; // Flag kiểm soát luồng render rAF
 
-function applyViewport() {
-  if (!ticking) {
-    window.requestAnimationFrame(() => {
-      wrap.style.transform = `translate(${vpX}px,${vpY}px) scale(${vpScale})`;
-      const pct = Math.round(vpScale * 100) + '%';
-      document.getElementById('zoomVal').textContent  = pct;
-      document.getElementById('stZoom').textContent   = pct;
-      ticking = false;
-    });
-    ticking = true;
+// ══════════════════════════════════════════════════════════
+//  ARCHITECTURE DATA STRUCTURES (PAGES & LAYERS)
+//  pages = Array of { id, name, layers: [ { id, name, visible, opacity, canvas, ctx, undoStack, redoStack } ] }
+// ══════════════════════════════════════════════════════════
+let pages = [];
+let activePageId = null;
+let activeLayerId = null;
+
+// Con trỏ đồ họa toàn cục trỏ động vào Lớp vẽ active
+let ctx = null; 
+
+function createPageStructure(pageId, pageName = '') {
+  let p = pages.find(item => item.id === pageId);
+  if (!p) {
+    p = {
+      id: pageId,
+      name: pageName || `Trang ${pages.length + 1}`,
+      layers: []
+    };
+    pages.push(p);
+    // Mỗi trang bắt buộc đi kèm ít nhất một lớp nền căn bản
+    createLayerStructure(pageId, `base-${pageId}`, 'Lớp nền cơ sở');
+  }
+  return p;
+}
+
+function createLayerStructure(pageId, layerId, layerName = '') {
+  const p = pages.find(item => item.id === pageId);
+  if (!p) return null;
+  
+  let l = p.layers.find(item => item.id === layerId);
+  if (!l) {
+    const elCanvas = document.createElement('canvas');
+    elCanvas.width = CANVAS_W;
+    elCanvas.height = CANVAS_H;
+    
+    const isBase = p.layers.length === 0;
+    const elCtx = elCanvas.getContext('2d');
+    
+    if (isBase) {
+      elCtx.fillStyle = '#ffffff';
+      elCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    }
+
+    l = {
+      id: layerId,
+      name: layerName || `Lớp số ${p.layers.length + 1}`,
+      visible: true,
+      opacity: 1,
+      canvas: elCanvas,
+      ctx: elCtx,
+      undoStack: [],
+      redoStack: []
+    };
+    p.layers.push(l);
+  }
+  return l;
+}
+
+function ensurePageAndLayer(pId, lId) {
+  createPageStructure(pId);
+  createLayerStructure(pId, lId);
+}
+
+function switchPage(pageId) {
+  const p = pages.find(item => item.id === pageId);
+  if (!p) return;
+  activePageId = pageId;
+  
+  // Mặc định focus vào lớp trên cùng của trang đó
+  if (p.layers.length > 0) {
+    activeLayerId = p.layers[p.layers.length - 1].id;
+  }
+  
+  assembleCanvasLayersDOM();
+  syncUIWithState();
+}
+
+function switchLayer(layerId) {
+  const p = pages.find(item => item.id === activePageId);
+  if (!p) return;
+  const l = p.layers.find(item => item.id === layerId);
+  if (!l) return;
+  
+  activeLayerId = layerId;
+  syncUIWithState();
+}
+
+function assembleCanvasLayersDOM() {
+  layersContainer.innerHTML = '';
+  const p = pages.find(item => item.id === activePageId);
+  if (!p) return;
+  
+  // Kết xuất các lớp vẽ tuần tự vào DOM container
+  p.layers.forEach(l => {
+    layersContainer.appendChild(l.canvas);
+    l.canvas.style.display = l.visible ? 'block' : 'none';
+    l.canvas.style.opacity = l.opacity;
+  });
+}
+
+function syncUIWithState() {
+  const p = pages.find(item => item.id === activePageId);
+  if (!p) return;
+  const l = p.layers.find(item => item.id === activeLayerId);
+  
+  if (l) {
+    ctx = l.ctx; // Redirect cọ vẽ sang context đích
+    document.getElementById('stLayer').textContent = l.name;
+  }
+  document.getElementById('stPage').textContent = p.name;
+  
+  updateUndoButtons();
+  renderSidebarLists();
+}
+
+// ══════════════════════════════════════════════════════════
+//  UI SIDEBAR RENDERERS
+// ══════════════════════════════════════════════════════════
+function renderSidebarLists() {
+  const pagesListEl = document.getElementById('pagesList');
+  const layersListEl = document.getElementById('layersList');
+  
+  // Render Trang
+  pagesListEl.innerHTML = pages.map(p => {
+    const isAct = p.id === activePageId;
+    return `
+      <div class="item-card ${isAct ? 'active' : ''}" onclick="switchPage('${p.id}')">
+        <span class="item-name">📖 ${p.name}</span>
+        <div class="item-actions">
+          ${pages.length > 1 ? `<span class="action-icon danger" onclick="deletePageAction(event, '${p.id}')" title="Xóa trang">🗑</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Render Lớp vẽ của trang hiện thời
+  const activePage = pages.find(item => item.id === activePageId);
+  if (!activePage) return;
+  
+  // Reverse để hiển thị lớp trên cùng lên trước ở giao diện panel điều hướng
+  const layersHTML = [...activePage.layers].reverse().map(l => {
+    const isAct = l.id === activeLayerId;
+    return `
+      <div class="item-card ${isAct ? 'active' : ''}" onclick="switchLayer('${l.id}')">
+        <div style="flex:1; display:flex; flex-direction:column; gap:2px; overflow:hidden;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="action-icon" onclick="toggleLayerVisibilityAction(event, '${l.id}')" title="Ẩn/Hiện lớp">
+              ${l.visible ? '👁️' : '❌'}
+            </span>
+            <span class="item-name">${l.name}</span>
+          </div>
+          <div class="layer-meta" onclick="event.stopPropagation()">
+            <label>Mờ:</label>
+            <input type="range" min="10" max="100" value="${Math.round(l.opacity*100)}" oninput="changeLayerOpacityAction('${l.id}', this.value)">
+          </div>
+        </div>
+        <div class="item-actions">
+          ${activePage.layers.length > 1 ? `<span class="action-icon danger" onclick="deleteLayerAction(event, '${l.id}')" title="Xóa lớp">🗑</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  layersListEl.innerHTML = layersHTML;
+}
+
+// ══════════════════════════════════════════════════════════
+//  SIDEBAR INTERACTIVE ACTIONS
+// ══════════════════════════════════════════════════════════
+function createNewPageAction() {
+  const newId = 'page_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+  createPageStructure(newId);
+  switchPage(newId);
+}
+
+function deletePageAction(e, pageId) {
+  e.stopPropagation();
+  if (pages.length <= 1) return;
+  if (!confirm('Xóa hoàn toàn trang này cùng tất cả các lớp vẽ bên trong?')) return;
+  
+  const targetIdx = pages.findIndex(p => p.id === pageId);
+  if (targetIdx === -1) return;
+  
+  pages.splice(targetIdx, 1);
+  if (activePageId === pageId) {
+    switchPage(pages[Math.max(0, targetIdx - 1)].id);
+  } else {
+    renderSidebarLists();
   }
 }
 
+function createNewLayerAction() {
+  const p = pages.find(item => item.id === activePageId);
+  if (!p) return;
+  const newId = 'layer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+  createLayerStructure(activePageId, newId);
+  switchPage(activePageId); // Tải lại DOM
+  switchLayer(newId);
+}
+
+function deleteLayerAction(e, layerId) {
+  e.stopPropagation();
+  const p = pages.find(item => item.id === activePageId);
+  if (!p || p.layers.length <= 1) return;
+  if (!confirm('Bạn có chắc chắn muốn xóa lớp vẽ này?')) return;
+  
+  const targetIdx = p.layers.findIndex(l => l.id === layerId);
+  if (targetIdx === -1) return;
+  
+  p.layers.splice(targetIdx, 1);
+  if (activeLayerId === layerId) {
+    switchLayer(p.layers[Math.max(0, targetIdx - 1)].id);
+  }
+  assembleCanvasLayersDOM();
+  renderSidebarLists();
+}
+
+function toggleLayerVisibilityAction(e, layerId) {
+  e.stopPropagation();
+  const p = pages.find(item => item.id === activePageId);
+  if (!p) return;
+  const l = p.layers.find(item => item.id === layerId);
+  if (!l) return;
+  
+  l.visible = !l.visible;
+  l.canvas.style.display = l.visible ? 'block' : 'none';
+  renderSidebarLists();
+}
+
+function changeLayerOpacityAction(layerId, val) {
+  const p = pages.find(item => item.id === activePageId);
+  if (!p) return;
+  const l = p.layers.find(item => item.id === layerId);
+  if (!l) return;
+  
+  l.opacity = parseInt(val) / 100;
+  l.canvas.style.opacity = l.opacity;
+}
+
+// ══════════════════════════════════════════════════════════
+//  VIEWPORT MANAGER (PAN & ZOOM)
+// ══════════════════════════════════════════════════════════
+function applyViewport() {
+  wrap.style.transform = `translate(${vpX}px,${vpY}px) scale(${vpScale})`;
+  const pct = Math.round(vpScale * 100) + '%';
+  document.getElementById('zoomVal').textContent  = pct;
+  document.getElementById('stZoom').textContent   = pct;
+}
+
 function clampViewport() {
-  const W = cv.width  * vpScale;
-  const H = cv.height * vpScale;
+  const W = CANVAS_W  * vpScale;
+  const H = CANVAS_H * vpScale;
   const aw = area.clientWidth;
   const ah = area.clientHeight;
-  // Cho phép kéo tối đa 80% canvas ra ngoài mép
   vpX = Math.max(-(W * 0.8), Math.min(aw - W * 0.2, vpX));
   vpY = Math.max(-(H * 0.8), Math.min(ah - H * 0.2, vpY));
 }
 
 function fitViewportToArea() {
-  const scaleX = area.clientWidth  / cv.width;
-  const scaleY = area.clientHeight / cv.height;
+  const scaleX = area.clientWidth  / CANVAS_W;
+  const scaleY = area.clientHeight / CANVAS_H;
   vpScale = Math.min(scaleX, scaleY) * 0.96;
   vpScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale));
-  vpX = (area.clientWidth  - cv.width  * vpScale) / 2;
-  vpY = (area.clientHeight - cv.height * vpScale) / 2;
+  vpX = (area.clientWidth  - CANVAS_W  * vpScale) / 2;
+  vpY = (area.clientHeight - CANVAS_H * vpScale) / 2;
   applyViewport();
 }
 
 function doZoom(dir) {
   const step = dir > 0 ? 1.25 : 0.8;
   const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale * step));
-  // Zoom vào giữa area
   const cx2 = area.clientWidth  / 2;
   const cy2 = area.clientHeight / 2;
   vpX = cx2 - (cx2 - vpX) * (newScale / vpScale);
@@ -402,16 +714,18 @@ function flashZoom() {
 }
 
 // ══════════════════════════════════════════════════════════
-//  CANVAS INIT
+//  CANVAS CORE INIT
 // ══════════════════════════════════════════════════════════
 function initCanvas() {
-  cv.width  = CANVAS_W;
-  cv.height = CANVAS_H;
+  wrap.style.width = CANVAS_W + 'px';
+  wrap.style.height = CANVAS_H + 'px';
   ov.width  = CANVAS_W;
   ov.height = CANVAS_H;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-  snap = null; drawing = false;
+  
+  if (pages.length === 0) {
+    ensurePageAndLayer('page-1', 'layer-1');
+    switchPage('page-1');
+  }
   fitViewportToArea();
 }
 
@@ -423,7 +737,7 @@ window.addEventListener('resize', () => {
 });
 
 // ══════════════════════════════════════════════════════════
-//  STATE
+//  STATE METRICS
 // ══════════════════════════════════════════════════════════
 let tool    = 'pen';
 let color   = '#000000';
@@ -435,40 +749,53 @@ let snap    = null;
 let myId    = null;
 let myColor = '#555';
 
-// ── Undo / Redo stack (local only) ──────────────────────
+// ── CO-ISOLATED UNDO / REDO ENGINE ──────────────────────
 const MAX_UNDO = 30;
-let undoStack = [];
-let redoStack = [];
+
+function getActiveLayerRef() {
+  const p = pages.find(item => item.id === activePageId);
+  if (!p) return null;
+  return p.layers.find(item => item.id === activeLayerId);
+}
 
 function pushUndo() {
-  // Lưu snapshot canvas hiện tại
-  undoStack.push(ctx.getImageData(0, 0, cv.width, cv.height));
-  if (undoStack.length > MAX_UNDO) undoStack.shift();
-  redoStack = []; // xóa redo khi có action mới
+  const layer = getActiveLayerRef();
+  if (!layer) return;
+  layer.undoStack.push(layer.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H));
+  if (layer.undoStack.length > MAX_UNDO) layer.undoStack.shift();
+  layer.redoStack = [];
   updateUndoButtons();
 }
 
 function doUndo() {
-  if (!undoStack.length) return;
-  redoStack.push(ctx.getImageData(0, 0, cv.width, cv.height));
-  ctx.putImageData(undoStack.pop(), 0, 0);
+  const layer = getActiveLayerRef();
+  if (!layer || !layer.undoStack.length) return;
+  layer.redoStack.push(layer.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H));
+  layer.ctx.putImageData(layer.undoStack.pop(), 0, 0);
   updateUndoButtons();
 }
 
 function doRedo() {
-  if (!redoStack.length) return;
-  undoStack.push(ctx.getImageData(0, 0, cv.width, cv.height));
-  ctx.putImageData(redoStack.pop(), 0, 0);
+  const layer = getActiveLayerRef();
+  if (!layer || !layer.redoStack.length) return;
+  layer.undoStack.push(layer.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H));
+  layer.ctx.putImageData(layer.redoStack.pop(), 0, 0);
   updateUndoButtons();
 }
 
 function updateUndoButtons() {
-  document.getElementById('btnUndo').disabled = !undoStack.length;
-  document.getElementById('btnRedo').disabled = !redoStack.length;
+  const layer = getActiveLayerRef();
+  if (!layer) {
+    document.getElementById('btnUndo').disabled = true;
+    document.getElementById('btnRedo').disabled = true;
+    return;
+  }
+  document.getElementById('btnUndo').disabled = !layer.undoStack.length;
+  document.getElementById('btnRedo').disabled = !layer.redoStack.length;
 }
 
 // ══════════════════════════════════════════════════════════
-//  COLOUR PALETTE
+//  COLOR PRESETS
 // ══════════════════════════════════════════════════════════
 const PRESETS = [
   '#000000','#ffffff','#6b7280','#d1d5db',
@@ -503,9 +830,7 @@ const TOOL_NAMES = {
 };
 
 function setTool(t) {
-  // Commit text nếu đang nhập
   if (tool === 'text') commitText();
-  // Tắt eyedropper overlay
   document.getElementById('eyedropOverlay').classList.remove('active');
   document.getElementById('loupe').style.display = 'none';
 
@@ -513,15 +838,10 @@ function setTool(t) {
   document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
   document.getElementById('t-' + t)?.classList.add('on');
 
-  const cursors = {
-    eraser:'cell', eye:'crosshair', fill:'crosshair',
-    text:'text', pen:'crosshair', brush:'crosshair',
-    line:'crosshair', rect:'crosshair', circle:'crosshair'
-  };
-  cv.style.cursor = cursors[t] || 'crosshair';
+  // Đổi cursor trên màn hiển thị tương tác lớn
+  area.style.cursor = t === 'text' ? 'text' : 'crosshair';
   document.getElementById('stTool').textContent = TOOL_NAMES[t] || t;
 
-  // Eyedropper: bật overlay
   if (t === 'eye') {
     document.getElementById('eyedropOverlay').classList.add('active');
   }
@@ -545,22 +865,18 @@ function updateSzDot() {
 }
 
 // ══════════════════════════════════════════════════════════
-//  COORDINATE CONVERSION — FIX BUG 1
-//  Dùng cv.getBoundingClientRect() vì canvas đã bị transform
-//  → getBCR trả về vị trí THỰC trên màn hình sau transform
+//  COORDINATE TRANSLATION MATRIX
 // ══════════════════════════════════════════════════════════
 function clientToCanvas(clientX, clientY) {
-  const r = cv.getBoundingClientRect();
-  // r.width / cv.width = vpScale (sau CSS transform)
-  // clientX - r.left = vị trí pixel màn hình trong canvas đã scaled
+  const r = wrap.getBoundingClientRect();
   return {
-    x: (clientX - r.left) * (cv.width  / r.width),
-    y: (clientY - r.top)  * (cv.height / r.height),
+    x: (clientX - r.left) * (CANVAS_W / r.width),
+    y: (clientY - r.top)  * (CANVAS_H / r.height),
   };
 }
 
 // ══════════════════════════════════════════════════════════
-//  APPLY DRAW — render nét vẽ lên canvas
+//  GRAPHICS DRAW APPLEY LAYER
 // ══════════════════════════════════════════════════════════
 function h2rgba(hex, a) {
   const r = parseInt(hex.slice(1,3),16);
@@ -571,6 +887,7 @@ function h2rgba(hex, a) {
 
 function applyDraw(d, target) {
   const c = target || ctx;
+  if(!c) return;
   c.save();
   c.globalAlpha = d.opacity ?? 1;
   c.lineWidth   = d.size;
@@ -591,11 +908,6 @@ function applyDraw(d, target) {
       c.fill();
       break;
     case 'move':
-      c.beginPath();
-      c.moveTo(d.x0, d.y0);
-      c.lineTo(d.x1, d.y1);
-      c.stroke();
-      break;
     case 'line':
       c.beginPath();
       c.moveTo(d.x0, d.y0);
@@ -633,10 +945,10 @@ function applyDraw(d, target) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  FLOOD FILL (đổ màu như Paint)
+//  FLOOD FILL ALGORITHM
 // ══════════════════════════════════════════════════════════
 function floodFill(c, startX, startY, fillColorHex, alpha) {
-  const imgData = c.getImageData(0, 0, cv.width, cv.height);
+  const imgData = c.getImageData(0, 0, CANVAS_W, CANVAS_H);
   const data    = imgData.data;
   const W       = imgData.width;
   const H       = imgData.height;
@@ -646,13 +958,11 @@ function floodFill(c, startX, startY, fillColorHex, alpha) {
   const idx = (startY * W + startX) * 4;
   const sr  = data[idx], sg = data[idx+1], sb = data[idx+2], sa = data[idx+3];
 
-  // Parse fill color
   const fr = parseInt(fillColorHex.slice(1,3),16);
   const fg = parseInt(fillColorHex.slice(3,5),16);
   const fb = parseInt(fillColorHex.slice(5,7),16);
   const fa = Math.round(alpha * 255);
 
-  // Không làm gì nếu màu giống nhau
   if (sr===fr && sg===fg && sb===fb && sa===fa) return;
 
   const TOLERANCE = 30;
@@ -666,7 +976,6 @@ function floodFill(c, startX, startY, fillColorHex, alpha) {
     data[i]=fr; data[i+1]=fg; data[i+2]=fb; data[i+3]=fa;
   }
 
-  // BFS flood fill
   const stack = [startX + startY * W];
   const visited = new Uint8Array(W * H);
   visited[startX + startY * W] = 1;
@@ -693,7 +1002,7 @@ function floodFill(c, startX, startY, fillColorHex, alpha) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  EYEDROPPER
+//  EYEDROPPER GRAPHICS SAMPLER
 // ══════════════════════════════════════════════════════════
 const eyeOverlay  = document.getElementById('eyedropOverlay');
 const loupeEl     = document.getElementById('loupe');
@@ -711,25 +1020,27 @@ eyeOverlay.addEventListener('mouseleave', () => { loupeEl.style.display = 'none'
 eyeOverlay.addEventListener('click', e => {
   const p = clientToCanvas(e.clientX, e.clientY);
   pickColorAt(p.x, p.y);
-  setTool('pen'); // quay lại bút chì sau khi hút màu
+  setTool('pen');
 });
 
 function updateLoupe(cx, cy, screenX, screenY) {
   loupeEl.style.display = 'block';
-  // Đặt loupe cạnh con trỏ, tránh ra ngoài màn hình
   let lx = screenX + 20, ly = screenY - 50;
   if (lx + 90 > window.innerWidth)  lx = screenX - 100;
   if (ly < 0) ly = screenY + 20;
   loupeEl.style.left = lx + 'px';
   loupeEl.style.top  = ly + 'px';
 
-  // Vẽ vùng phóng to lên loupeCanvas
   const half = (LOUPE_SIZE / LOUPE_ZOOM) / 2;
   loupeCtx.imageSmoothingEnabled = false;
   loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
-  loupeCtx.drawImage(cv, cx - half, cy - half, LOUPE_SIZE / LOUPE_ZOOM, LOUPE_SIZE / LOUPE_ZOOM, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
+  
+  // Tổng hợp mẫu màu từ lớp đồ họa đang được tương tác trực tiếp
+  const activeLayer = getActiveLayerRef();
+  if (activeLayer) {
+    loupeCtx.drawImage(activeLayer.canvas, cx - half, cy - half, LOUPE_SIZE / LOUPE_ZOOM, LOUPE_SIZE / LOUPE_ZOOM, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
+  }
 
-  // Crosshair
   loupeCtx.strokeStyle = 'rgba(0,0,0,0.5)';
   loupeCtx.lineWidth = 1;
   loupeCtx.beginPath();
@@ -737,10 +1048,9 @@ function updateLoupe(cx, cy, screenX, screenY) {
   loupeCtx.moveTo(0, LOUPE_SIZE/2); loupeCtx.lineTo(LOUPE_SIZE, LOUPE_SIZE/2);
   loupeCtx.stroke();
 
-  // Màu pixel giữa
   const px = Math.round(cx), py = Math.round(cy);
-  if (px >= 0 && py >= 0 && px < cv.width && py < cv.height) {
-    const d = ctx.getImageData(px, py, 1, 1).data;
+  if (activeLayer && px >= 0 && py >= 0 && px < CANVAS_W && py < CANVAS_H) {
+    const d = activeLayer.ctx.getImageData(px, py, 1, 1).data;
     const hex = '#' + [d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join('');
     loupeColor.style.background = hex;
     loupeColor.textContent      = hex.toUpperCase();
@@ -749,23 +1059,24 @@ function updateLoupe(cx, cy, screenX, screenY) {
 
 function pickColorAt(cx, cy) {
   const px = Math.round(cx), py = Math.round(cy);
-  if (px < 0 || py < 0 || px >= cv.width || py >= cv.height) return;
-  const d   = ctx.getImageData(px, py, 1, 1).data;
+  if (px < 0 || py < 0 || px >= CANVAS_W || py >= CANVAS_H) return;
+  const activeLayer = getActiveLayerRef();
+  if (!activeLayer) return;
+  
+  const d   = activeLayer.ctx.getImageData(px, py, 1, 1).data;
   const hex = '#' + [d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join('');
   setColor(hex);
   palEl.querySelectorAll('.swatch').forEach(s => s.classList.remove('on'));
 }
 
 // ══════════════════════════════════════════════════════════
-//  TEXT TOOL
+//  TEXT METRICS TOOL
 // ══════════════════════════════════════════════════════════
 const textInput = document.getElementById('textInput');
 let textX = 0, textY = 0;
 
 function startText(canvasX, canvasY, screenX, screenY) {
   textX = canvasX; textY = canvasY;
-  const r = cv.getBoundingClientRect();
-  // Vị trí text input trên màn hình
   textInput.style.display = 'block';
   textInput.style.left    = screenX + 'px';
   textInput.style.top     = (screenY - 20) + 'px';
@@ -779,12 +1090,8 @@ function commitText() {
   const txt = textInput.value.trim();
   if (txt) {
     pushUndo();
-    const d = {
-      type:'text', tool:'text',
-      color, size, opacity, fill: false,
-      x0: textX, y0: textY + size * 4,
-      text: txt
-    };
+    const d = mkData('text', textX, textY + size * 4, textX, textY + size * 4);
+    d.text = txt;
     applyDraw(d);
     socket.emit('draw', d);
   }
@@ -800,35 +1107,26 @@ textInput.addEventListener('keydown', e => {
 textInput.addEventListener('blur', () => { commitText(); });
 
 // ══════════════════════════════════════════════════════════
-//  TOUCH HANDLER — 1 ngón vẽ, 2 ngón pan/zoom mượt mà (Delta-based)
+//  TOUCH CONTROLLER ENGINE (1 Finger Draw, 2 Fingers Pan/Zoom)
 // ══════════════════════════════════════════════════════════
 let touchMode = null;
-let lastTouchDist = 0;
-let lastTouchMidX = 0;
-let lastTouchMidY = 0;
+let pinchStartDist = 0, pinchStartScale = 1;
+let panStartVpX = 0, panStartVpY = 0;
+let panStartMidX = 0, panStartMidY = 0;
 let panHintTimer = null;
 
-function getTouchMid(t) { 
-  return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 }; 
-}
-function getTouchDist(t) { 
-  const dx = t[0].clientX - t[1].clientX; 
-  const dy = t[0].clientY - t[1].clientY; 
-  return Math.sqrt(dx * dx + dy * dy); 
-}
+function getTouchMid(t) { return { x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2 }; }
+function getTouchDist(t) { const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY; return Math.sqrt(dx*dx+dy*dy); }
 
 function showPanHint() {
   document.getElementById('panHint').classList.add('show');
   clearTimeout(panHintTimer);
-  panHintTimer = setTimeout(() => document.getElementById('panHint').classList.remove('show'), 1500);
+  panHintTimer = setTimeout(()=>document.getElementById('panHint').classList.remove('show'), 1500);
 }
-
-area.addEventListener('contextmenu', e => e.preventDefault());
 
 area.addEventListener('touchstart', e => {
   e.preventDefault();
   const t = e.touches;
-  
   if (t.length === 1 && touchMode === null) {
     touchMode = 'draw';
     const p = clientToCanvas(t[0].clientX, t[0].clientY);
@@ -836,13 +1134,11 @@ area.addEventListener('touchstart', e => {
   } else if (t.length === 2) {
     if (touchMode === 'draw' && drawing) cancelDraw();
     touchMode = 'pan';
-    
-    // Ghi nhận mốc cơ sở ban đầu của khung hình đầu tiên
-    lastTouchDist = getTouchDist(t);
+    pinchStartDist  = getTouchDist(t);
+    pinchStartScale = vpScale;
     const mid = getTouchMid(t);
-    lastTouchMidX = mid.x;
-    lastTouchMidY = mid.y;
-    
+    panStartMidX = mid.x; panStartMidY = mid.y;
+    panStartVpX  = vpX;   panStartVpY  = vpY;
     showPanHint();
   }
 }, { passive: false });
@@ -850,45 +1146,21 @@ area.addEventListener('touchstart', e => {
 area.addEventListener('touchmove', e => {
   e.preventDefault();
   const t = e.touches;
-  
   if (touchMode === 'draw' && t.length === 1) {
     const p = clientToCanvas(t[0].clientX, t[0].clientY);
-    emitCursor(p.x, p.y); 
+    emitCursor(p.x, p.y);
     handleDrawMove(p.x, p.y);
   } else if (touchMode === 'pan' && t.length === 2) {
-    const mid = getTouchMid(t);
+    const mid  = getTouchMid(t);
     const dist = getTouchDist(t);
-    
-    // 1. Tính toán hệ số phóng to/thu nhỏ dựa trên delta khung hình trước
-    let scaleFactor = 1;
-    if (lastTouchDist > 0 && dist > 0) {
-      scaleFactor = dist / lastTouchDist;
-    }
-    
-    const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vpScale * scaleFactor));
-    const actualFactor = newScale / vpScale;
-    
-    // 2. Tìm tâm Zoom (chính là trung điểm hiện tại của 2 ngón tay so với khung hiển thị)
-    const areaRect = area.getBoundingClientRect();
-    const centerX = mid.x - areaRect.left;
-    const centerY = mid.y - areaRect.top;
-    
-    // Dịch chuyển ma trận tịnh tiến dịch theo tâm tương ứng
-    vpX = centerX - (centerX - vpX) * actualFactor;
-    vpY = centerY - (centerY - vpY) * actualFactor;
+    let newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (dist / pinchStartDist)));
+    const aRect  = area.getBoundingClientRect();
+    const midRelX = panStartMidX - aRect.left;
+    const midRelY = panStartMidY - aRect.top;
+    const sf = newScale / pinchStartScale;
+    vpX = midRelX - (midRelX - panStartVpX) * sf + (mid.x - panStartMidX);
+    vpY = midRelY - (midRelY - panStartVpY) * sf + (mid.y - panStartMidY);
     vpScale = newScale;
-    
-    // 3. Cộng dồn khoảng kéo di chuyển (Pan Delta) của trung điểm ngón tay
-    const deltaX = mid.x - lastTouchMidX;
-    const deltaY = mid.y - lastTouchMidY;
-    vpX += deltaX;
-    vpY += deltaY;
-    
-    // Ghi đè trạng thái hiện tại làm mốc cho khung hình kế tiếp
-    lastTouchDist = dist;
-    lastTouchMidX = mid.x;
-    lastTouchMidY = mid.y;
-    
     clampViewport();
     applyViewport();
     flashZoom();
@@ -898,28 +1170,20 @@ area.addEventListener('touchmove', e => {
 area.addEventListener('touchend', e => {
   e.preventDefault();
   const remaining = e.touches.length;
-  
   if (touchMode === 'draw' && remaining === 0) {
     const ct = e.changedTouches[0];
-    const p = clientToCanvas(ct.clientX, ct.clientY);
+    const p  = clientToCanvas(ct.clientX, ct.clientY);
     handleDrawEnd(p.x, p.y);
     touchMode = null;
-  } else if (touchMode === 'pan') {
-    if (remaining === 0) {
-      touchMode = null;
-      document.getElementById('panHint').classList.remove('show');
-    } else if (remaining === 1) {
-      // Khi nhấc 1 ngón, cấu hình trạng thái về null để tránh việc vẽ đè ngoài ý muốn khi nhấc tay không đều
-      touchMode = null;
-      document.getElementById('panHint').classList.remove('show');
-    }
+  } else if (touchMode === 'pan' && remaining <= 1) {
+    touchMode = null;
+    document.getElementById('panHint').classList.remove('show');
   }
 }, { passive: false });
 
 // ══════════════════════════════════════════════════════════
-//  MOUSE EVENTS
+//  MOUSE INTERACTION CONTROLLER
 // ══════════════════════════════════════════════════════════
-// Wheel zoom — zoom về vị trí con trỏ
 area.addEventListener('wheel', e => {
   e.preventDefault();
   const step = e.deltaY < 0 ? 1.15 : (1/1.15);
@@ -935,29 +1199,24 @@ area.addEventListener('wheel', e => {
   flashZoom();
 }, { passive: false });
 
-// ── Chuột phải = pan ──────────────────────────────────────
 let isPanning = false;
 let panLastX = 0, panLastY = 0;
 
-// Tắt context menu khi chuột phải trên canvas + area
-cv.addEventListener('contextmenu',   e => e.preventDefault());
 area.addEventListener('contextmenu', e => e.preventDefault());
 
-// mousedown trên AREA (không chỉ cv) để bắt chuột phải dù đang ở ngoài canvas
 area.addEventListener('mousedown', e => {
-  if (e.button === 2) {           // chuột PHẢI → pan
+  if (e.button === 2) { 
     isPanning = true;
     panLastX  = e.clientX;
     panLastY  = e.clientY;
     area.style.cursor = 'grabbing';
     e.preventDefault();
-  } else if (e.button === 0 && e.target === cv) {  // chuột TRÁI trên canvas → vẽ
+  } else if (e.button === 0 && (e.target === ov || wrap.contains(e.target))) { 
     const p = clientToCanvas(e.clientX, e.clientY);
     handleDrawStart(p.x, p.y, e.clientX, e.clientY);
   }
 });
 
-// mousemove trên WINDOW để pan không bị dừng khi chuột ra ngoài canvas
 window.addEventListener('mousemove', e => {
   if (isPanning) {
     const dx = e.clientX - panLastX;
@@ -970,8 +1229,7 @@ window.addEventListener('mousemove', e => {
     applyViewport();
     return;
   }
-  // Chỉ xử lý move cho vẽ khi chuột đang ở trên canvas
-  if (e.target === cv || drawing) {
+  if (e.target === ov || wrap.contains(e.target) || drawing) {
     const p = clientToCanvas(e.clientX, e.clientY);
     document.getElementById('stPos').textContent = `${Math.round(p.x)}, ${Math.round(p.y)}`;
     emitCursor(p.x, p.y);
@@ -979,7 +1237,6 @@ window.addEventListener('mousemove', e => {
   }
 });
 
-// mouseup trên WINDOW để không stuck khi nhả ngoài canvas
 window.addEventListener('mouseup', e => {
   if (e.button === 2 && isPanning) {
     isPanning = false;
@@ -992,25 +1249,15 @@ window.addEventListener('mouseup', e => {
   }
 });
 
-cv.addEventListener('mouseleave', e => {
-  // Chỉ end draw khi không pan, và chỉ cho freehand (shape vẫn tiếp tục ra ngoài)
-  if (!isPanning && drawing && !isShape(tool)) {
-    const p = clientToCanvas(e.clientX, e.clientY);
-    handleDrawEnd(p.x, p.y);
-  }
-});
-
 // ══════════════════════════════════════════════════════════
-//  DRAW LOGIC
+//  DRAWING PIPELINE LOGIC
 // ══════════════════════════════════════════════════════════
 function handleDrawStart(x, y, screenX, screenY) {
-  // Text tool: không vẽ, mở input
   if (tool === 'text') {
     commitText();
     startText(x, y, screenX || x, screenY || y);
     return;
   }
-  // Fill tool: áp dụng ngay
   if (tool === 'fill') {
     pushUndo();
     const d = mkData('fill', x, y, x, y);
@@ -1018,19 +1265,21 @@ function handleDrawStart(x, y, screenX, screenY) {
     socket.emit('draw', d);
     return;
   }
-  // Eyedropper: handled by overlay, không vào đây
   if (tool === 'eye') return;
 
-  pushUndo(); // lưu undo trước khi bắt đầu nét vẽ
+  pushUndo();
   drawing = true;
   sx = lx = x;
   sy = ly = y;
 
   if (isShape(tool)) {
-    snap = ctx.getImageData(0, 0, cv.width, cv.height);
+    const layer = getActiveLayerRef();
+    if(layer) {
+      snap = layer.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+    }
     return;
   }
-  // Dot (click tại chỗ)
+  
   const d = mkData('dot', sx, sy, sx, sy);
   applyDraw(d);
   socket.emit('draw', d);
@@ -1039,8 +1288,7 @@ function handleDrawStart(x, y, screenX, screenY) {
 function handleDrawMove(x, y) {
   if (!drawing) return;
   if (isShape(tool)) {
-    // Preview trên overlay
-    octx.clearRect(0, 0, ov.width, ov.height);
+    octx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     applyDraw(mkData(tool, sx, sy, x, y), octx);
   } else {
     const d = mkData('move', lx, ly, x, y);
@@ -1054,9 +1302,12 @@ function handleDrawEnd(x, y) {
   if (!drawing) return;
   drawing = false;
   if (isShape(tool)) {
-    octx.clearRect(0, 0, ov.width, ov.height);
-    // FIX BUG 3: restore snap rồi commit (không cancel khi mouseout)
-    if (snap) { ctx.putImageData(snap, 0, 0); snap = null; }
+    octx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    const layer = getActiveLayerRef();
+    if (snap && layer) { 
+      layer.ctx.putImageData(snap, 0, 0); 
+      snap = null; 
+    }
     const d = mkData(tool, sx, sy, x, y);
     applyDraw(d);
     socket.emit('draw', d);
@@ -1066,10 +1317,13 @@ function handleDrawEnd(x, y) {
 function cancelDraw() {
   if (!drawing) return;
   drawing = false;
-  // Cancel undoes the pushUndo we did in handleDrawStart
-  if (undoStack.length) { ctx.putImageData(undoStack.pop(), 0, 0); updateUndoButtons(); }
-  if (snap) { snap = null; }
-  octx.clearRect(0, 0, ov.width, ov.height);
+  const layer = getActiveLayerRef();
+  if (layer && layer.undoStack.length) { 
+    layer.ctx.putImageData(layer.undoStack.pop(), 0, 0); 
+    updateUndoButtons(); 
+  }
+  snap = null;
+  octx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 }
 
 function isShape(t) { return t === 'line' || t === 'rect' || t === 'circle'; }
@@ -1079,36 +1333,40 @@ function mkData(type, x0, y0, x1, y1) {
   return {
     type, tool,
     color:   (tool === 'eraser') ? '#ffffff' : color,
-    // FIX BUG 6: gửi opacity gốc, không nhân hệ số vào data
     size:    tool === 'eraser' ? size * 2.5 : isBrush ? size * 2.5 : size,
     opacity: opacity,
-    // Brush dùng globalAlpha thấp hơn khi render local
     brushFeel: isBrush ? 0.65 : 1,
     fill:    document.getElementById('fillChk').checked,
-    x0, y0, x1, y1
+    x0, y0, x1, y1,
+    pageId: activePageId,   // Đóng gói bưu cục nhận diện Trang
+    layerId: activeLayerId  // Đóng gói bưu cục nhận diện Lớp vẽ
   };
 }
 
-// Override applyDraw để dùng brushFeel khi render
-const _applyDraw = applyDraw;
-// Đã inline brushFeel vào applyDraw ở trên
-
 // ══════════════════════════════════════════════════════════
-//  CLEAR
+//  CLEAR ACTION
 // ══════════════════════════════════════════════════════════
-function clearCanvas() {
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, cv.width, cv.height);
-  octx.clearRect(0, 0, ov.width, ov.height);
-  snap = null; drawing = false;
-  undoStack = []; redoStack = [];
-  updateUndoButtons();
-}
-
 function doClear() {
-  if (!confirm('Xóa toàn bộ canvas? Mọi người đều sẽ thấy.')) return;
-  clearCanvas();
-  socket.emit('clear');
+  if (!confirm('Xóa sạch nội dung thuộc lớp vẽ hiện hành? Thao tác sẽ đồng bộ đến mọi người.')) return;
+  
+  const layer = getActiveLayerRef();
+  if (!layer) return;
+  
+  const p = pages.find(item => item.id === activePageId);
+  const isBase = p && p.layers[0].id === layer.id;
+  
+  if (isBase) {
+    layer.ctx.fillStyle = '#ffffff';
+    layer.ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  } else {
+    layer.ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  }
+  
+  layer.undoStack = [];
+  layer.redoStack = [];
+  updateUndoButtons();
+  
+  socket.emit('clear', { pageId: activePageId, layerId: activeLayerId });
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1128,12 +1386,11 @@ document.addEventListener('keydown', e => {
   if (e.key === '-') doZoom(-1);
   if (e.key === '[') setSize(Math.max(1, size - 2));
   if (e.key === ']') setSize(Math.min(80, size + 2));
-  // Sync slider
   document.getElementById('szSlider').value = size;
 });
 
 // ══════════════════════════════════════════════════════════
-//  REMOTE CURSORS
+//  REMOTE REALTIME CURSORS
 // ══════════════════════════════════════════════════════════
 const rcMap = {};
 
@@ -1171,7 +1428,7 @@ socket.on('removeCursor', id => {
 });
 
 // ══════════════════════════════════════════════════════════
-//  SOCKET EVENTS
+//  SOCKET CUSTOM HOOK EVENTS
 // ══════════════════════════════════════════════════════════
 socket.on('init', ({ history, me, users }) => {
   myId    = socket.id;
@@ -1181,15 +1438,80 @@ socket.on('init', ({ history, me, users }) => {
   mt.style.borderLeft  = `3px solid ${me.color}`;
   mt.style.paddingLeft = '7px';
 
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, cv.width, cv.height);
-  history.forEach(d => applyDraw(d));
+  pages = [];
+  layersContainer.innerHTML = '';
+  
+  // Khởi tạo thực thể Trang & Lớp vẽ theo tệp tin lịch sử đồng bộ nhận về
+  if (history && history.length > 0) {
+    history.forEach(d => {
+      const pId = d.pageId || 'page-1';
+      const lId = d.layerId || 'layer-1';
+      ensurePageAndLayer(pId, lId);
+      
+      const p = pages.find(item => item.id === pId);
+      const l = p.layers.find(item => item.id === lId);
+      applyDraw(d, l.ctx);
+    });
+    switchPage(pages[0].id);
+  } else {
+    ensurePageAndLayer('page-1', 'layer-1');
+    switchPage('page-1');
+  }
+
   updateUserBadges(users);
-  updateUndoButtons();
 });
 
-socket.on('draw',     d  => applyDraw(d));
-socket.on('clear',    () => clearCanvas());
+socket.on('draw', d => {
+  const pId = d.pageId || 'page-1';
+  const lId = d.layerId || 'layer-1';
+  
+  // Cơ chế tự động kích hoạt tạo cấu trúc nếu vẽ bất đồng bộ ở trang khác
+  ensurePageAndLayer(pId, lId);
+  
+  const p = pages.find(item => item.id === pId);
+  const l = p.layers.find(item => item.id === lId);
+  applyDraw(d, l.ctx);
+  
+  // Nếu hành động vẽ đang diễn ra ngay tại trang hiện thời, cập nhật sidebar preview nếu cần
+  if(pId === activePageId) {
+     // Có thể bổ sung cập nhật hình thu nhỏ ở đây nếu phát triển nâng cao
+  }
+});
+
+socket.on('clear', data => {
+  if (data && data.pageId && data.layerId) {
+    const p = pages.find(item => item.id === data.pageId);
+    if (!p) return;
+    const l = p.layers.find(item => item.id === data.layerId);
+    if (!l) return;
+    
+    if (p.layers[0].id === l.id) {
+      l.ctx.fillStyle = '#ffffff';
+      l.ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    } else {
+      l.ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    }
+    l.undoStack = [];
+    l.redoStack = [];
+    if(data.pageId === activePageId) updateUndoButtons();
+  } else {
+    // Xóa toàn bộ tệp sổ vẽ nếu cấu hình server phát lệnh không tham số
+    pages.forEach(p => {
+      p.layers.forEach((l, idx) => {
+        if (idx === 0) {
+          l.ctx.fillStyle = '#ffffff';
+          l.ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        } else {
+          l.ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        }
+        l.undoStack = [];
+        l.redoStack = [];
+      });
+    });
+    updateUndoButtons();
+  }
+});
+
 socket.on('userList', users => {
   document.getElementById('countTxt').textContent = users.length + ' người';
   updateUserBadges(users);
